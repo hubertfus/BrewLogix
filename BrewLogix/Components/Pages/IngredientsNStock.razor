@@ -1,5 +1,254 @@
 @page "/ingredientsNStocks"
+@using BrewLogix.Models
+@using BrewLogix.Services
+@inject IngredientService IngredientService
+@inject StockEntriesService StockEntriesService
+@rendermode InteractiveServer
 
-<PageTitle> Ingredients & Stocks</PageTitle>
+<PageTitle>Ingredients & Stocks</PageTitle>
 
-<h3>Ingredients & Stocks</h3>
+<h3 class="mb-4">Ingredients & Stocks</h3>
+
+<!-- Add buttons -->
+<div class="d-flex gap-2 mb-4">
+    <button class="btn btn-primary" @onclick="() => isIngredientFormOpen = true">
+        <i class="bi bi-plus-circle me-2"></i> Add Ingredient
+    </button>
+    <button class="btn btn-primary" @onclick="() => isStockEntryFormOpen = true">
+        <i class="bi bi-plus-circle me-2"></i> Add Stock Entry
+    </button>
+</div>
+
+<!-- Add Ingredient Form -->
+@if (isIngredientFormOpen)
+{
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Add/Edit Ingredient</h5>
+            <EditForm Model="@newIngredient" OnValidSubmit="HandleAddOrUpdateIngredient">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <InputText class="form-control" @bind-Value="newIngredient.Name" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Type</label>
+                    <InputText class="form-control" @bind-Value="newIngredient.Type" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Unit</label>
+                    <InputText class="form-control" @bind-Value="newIngredient.Unit" />
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary" @onclick="() => CancelIngredientEdit()">Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<!-- Add Stock Entry Form -->
+@if (isStockEntryFormOpen)
+{
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Add/Edit Stock Entry</h5>
+            <EditForm Model="@newStockEntry" OnValidSubmit="HandleAddOrUpdateStockEntry">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <div class="mb-3">
+                    <label class="form-label">Ingredient</label>
+                    <select class="form-select" @bind="newStockEntry.IngredientId">
+                        @foreach (var ingredient in ingredients)
+                        {
+                            <option value="@ingredient.Id">@ingredient.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Quantity</label>
+                    <InputNumber class="form-control" @bind-Value="newStockEntry.Quantity" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Delivery Date</label>
+                    <InputDate class="form-control" @bind-Value="newStockEntry.DeliveryDate" />
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary" @onclick="() => CancelStockEntryEdit()">Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<!-- Search Bars -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <label class="form-label">Search Ingredients</label>
+        <InputText class="form-control" @bind-Value="ingredientSearchTerm" placeholder="Search by name or type..." />
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Search Stock Entries</label>
+        <InputText class="form-control" @bind-Value="stockEntrySearchTerm" placeholder="Search by ingredient name..." />
+    </div>
+</div>
+
+<!-- Ingredient List -->
+<div class="card mb-4">
+    <div class="card-header"><strong>Ingredients</strong></div>
+    <ul class="list-group list-group-flush">
+        @foreach (var ingredient in FilteredIngredients)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>@ingredient.Name</strong> <span class="text-muted">(@ingredient.Type • @ingredient.Unit)</span>
+                </div>
+                <div>
+                    <button class="btn btn-warning btn-sm me-2" @onclick="() => EditIngredient(ingredient)">Edit</button>
+                    <button class="btn btn-danger btn-sm" @onclick="() => DeleteIngredient(ingredient)">Delete</button>
+                </div>
+            </li>
+        }
+    </ul>
+</div>
+
+<!-- Stock Entry List -->
+<div class="card">
+    <div class="card-header"><strong>Stock Entries</strong></div>
+    <ul class="list-group list-group-flush">
+        @foreach (var entry in FilteredStockEntries)
+        {
+            var ingredient = ingredients.FirstOrDefault(i => i.Id == entry.IngredientId);
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>@ingredient?.Name</strong>
+                    <span class="text-muted">@entry.Quantity @ingredient?.Unit • @entry.DeliveryDate.ToString("yyyy-MM-dd")</span>
+                </div>
+                <div>
+                    <button class="btn btn-warning btn-sm me-2" @onclick="() => EditStockEntry(entry)">Edit</button>
+                    <button class="btn btn-danger btn-sm" @onclick="() => DeleteStockEntry(entry)">Delete</button>
+                </div>
+            </li>
+        }
+    </ul>
+</div>
+
+@code {
+    private List<Ingredient> ingredients = new();
+    private List<StockEntry> stockEntries = new();
+
+    private Ingredient newIngredient = new();
+    private StockEntry newStockEntry = new();
+
+    private bool isIngredientFormOpen = false;
+    private bool isStockEntryFormOpen = false;
+
+    private string ingredientSearchTerm = string.Empty;
+    private string stockEntrySearchTerm = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        ingredients = IngredientService.GetAllIngredients().ToList();
+        stockEntries = StockEntriesService.GetAllStockEntries().ToList();
+    }
+
+    private IEnumerable<Ingredient> FilteredIngredients =>
+        string.IsNullOrWhiteSpace(ingredientSearchTerm)
+            ? ingredients
+            : ingredients.Where(i =>
+                i.Name.Contains(ingredientSearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                i.Type.Contains(ingredientSearchTerm, StringComparison.OrdinalIgnoreCase));
+
+    private IEnumerable<StockEntry> FilteredStockEntries =>
+        string.IsNullOrWhiteSpace(stockEntrySearchTerm)
+            ? stockEntries
+            : stockEntries.Where(e =>
+            {
+                var ingredient = ingredients.FirstOrDefault(i => i.Id == e.IngredientId);
+                return ingredient != null && ingredient.Name.Contains(stockEntrySearchTerm, StringComparison.OrdinalIgnoreCase);
+            });
+
+    private void HandleAddOrUpdateIngredient()
+    {
+        if (newIngredient.Id == 0)
+        {
+            IngredientService.AddIngredient(newIngredient);
+        }
+        else
+        {
+            IngredientService.UpdateIngredient(newIngredient);
+        }
+
+        ingredients = IngredientService.GetAllIngredients().ToList();
+        newIngredient = new();
+        isIngredientFormOpen = false;
+    }
+
+    private void EditIngredient(Ingredient ingredient)
+    {
+        newIngredient = new Ingredient
+        {
+            Id = ingredient.Id,
+            Name = ingredient.Name,
+            Type = ingredient.Type,
+            Unit = ingredient.Unit
+        };
+        isIngredientFormOpen = true;
+    }
+
+    private void DeleteIngredient(Ingredient ingredient)
+    {
+        IngredientService.DeleteIngredient(ingredient);
+        ingredients = IngredientService.GetAllIngredients().ToList();
+    }
+
+    private void CancelIngredientEdit()
+    {
+        newIngredient = new();
+        isIngredientFormOpen = false;
+    }
+
+    private void HandleAddOrUpdateStockEntry()
+    {
+        if (newStockEntry.Id == 0)
+        {
+            StockEntriesService.AddStockEntry(newStockEntry);
+        }
+        else
+        {
+            StockEntriesService.UpdateStockEntry(newStockEntry);
+        }
+
+        stockEntries = StockEntriesService.GetAllStockEntries().ToList();
+        newStockEntry = new();
+        isStockEntryFormOpen = false;
+    }
+
+    private void EditStockEntry(StockEntry entry)
+    {
+        newStockEntry = new StockEntry
+        {
+            Id = entry.Id,
+            IngredientId = entry.IngredientId,
+            Quantity = entry.Quantity,
+            DeliveryDate = entry.DeliveryDate
+        };
+        isStockEntryFormOpen = true;
+    }
+
+    private void DeleteStockEntry(StockEntry entry)
+    {
+        StockEntriesService.DeleteStockEntry(entry);
+        stockEntries = StockEntriesService.GetAllStockEntries().ToList();
+    }
+
+    private void CancelStockEntryEdit()
+    {
+        newStockEntry = new();
+        isStockEntryFormOpen = false;
+    }
+    
+}

@@ -8,6 +8,8 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddSingleton<ClientService>();
+builder.Services.AddSingleton<IngredientService>();
+builder.Services.AddSingleton<StockEntriesService>();
 
 
 var app = builder.Build();

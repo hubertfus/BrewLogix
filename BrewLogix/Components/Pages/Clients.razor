@@ -1,4 +1,3 @@
-
 @page "/clients"
 @using BrewLogix.Models
 @inject BrewLogix.Services.ClientService ClientService
@@ -8,7 +7,7 @@
 
 <h3 class="mb-4">Clients</h3>
 
-<button class="btn btn-primary mb-3" @onclick="() => isFormOpen = true">
+<button class="btn btn-primary mb-3" @onclick="() => OpenClientForm()">
     <i class="bi bi-plus-circle me-2"></i> Add Client
 </button>
 
@@ -16,7 +15,7 @@
 {
     <div class="card mb-4">
         <div class="card-body">
-            <h5 class="card-title mb-3">Add/Edit Client</h5>
+            <h5 class="card-title mb-3">@((newClient.Id == 0) ? "Add Client" : "Edit Client")</h5>
             <EditForm Model="@newClient" OnValidSubmit="HandleAddClient">
                 <DataAnnotationsValidator />
                 <ValidationSummary />
@@ -34,8 +33,8 @@
                     <InputText class="form-control" @bind-Value="newClient.Address" />
                 </div>
                 <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">Add/Edit Client</button>
-                    <button type="button" class="btn btn-secondary" @onclick="() => isFormOpen = false">Cancel</button>
+                    <button type="submit" class="btn btn-primary">@((newClient.Id == 0) ? "Add Client" : "Update Client")</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CancelForm">Cancel</button>
                 </div>
             </EditForm>
         </div>
@@ -88,29 +87,56 @@ else
         clients = ClientService.GetAllClients().ToList();
     }
 
+    private void OpenClientForm()
+    {
+        newClient = new Client();
+        isFormOpen = true;
+    }
+
+    private void CancelForm()
+    {
+        isFormOpen = false;
+        newClient = new Client();
+    }
+
     private void HandleAddClient()
     {
-
-        ClientService.AddClient(newClient);
+        if (newClient.Id == 0) 
+        {
+            ClientService.AddClient(newClient);
+        }
+        else 
+        {
+            ClientService.UpdateClient(newClient);
+        }
 
         newClient = new Client();
         isFormOpen = false;
+        clients = ClientService.GetAllClients().ToList(); 
     }
 
     private void EditClient(Client client)
     {
-        ClientService.UpdateClient(client);
-        isFormOpen = true;
+        newClient = new Client
+        {
+                Id = client.Id,
+                Name = client.Name,
+                ContactEmail = client.ContactEmail,
+                Address = client.Address
+        };
+
+        isFormOpen = true; 
     }
 
     private void DeleteClient(Client client)
     {
         ClientService.DeleteClient(client);
+        clients = ClientService.GetAllClients().ToList(); 
     }
 
     private IEnumerable<Client> filteredClients =>
-        clients.Where(client => string.IsNullOrWhiteSpace(searchTerm) ||
-                                client.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                                client.ContactEmail.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                                client.Address.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+            clients.Where(client => string.IsNullOrWhiteSpace(searchTerm) ||
+                                    client.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                                    client.ContactEmail.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                                    client.Address.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
 }

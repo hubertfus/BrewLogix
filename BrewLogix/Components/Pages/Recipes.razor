@@ -3,7 +3,6 @@
 @using BrewLogix.Models
 @using BrewLogix.Services
 @inject RecipeService RecipeService
-
 @rendermode InteractiveServer
 
 <PageTitle>Recipe Management</PageTitle>
@@ -83,9 +82,8 @@
                                         @foreach (var ingredient in newRecipe.Ingredients)
                                         {
                                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                @ingredient.Ingredient.Name -
-                                                <InputNumber @bind-Value="ingredient.Quantity" class="form-control w-25"
-                                                             @onchange="() => UpdateIngredientQuantity(ingredient)" />
+                                                @ingredient.Ingredient.Name - 
+                                                <InputNumber @bind-Value="ingredient.Quantity" class="form-control w-25" />
                                                 @ingredient.Ingredient.Unit
                                                 <button type="button" class="btn btn-danger btn-sm" @onclick="() => RemoveRecipeIngredient(ingredient)">
                                                     <i class="fas fa-trash-alt"></i> Delete
@@ -157,7 +155,7 @@
     private string recipeSearchTerm = string.Empty;
     private bool isRecipeFormOpen = false;
     private Recipe selectedRecipe;
-    private Recipe newRecipe = new Recipe();
+    private Recipe newRecipe = new Recipe { Ingredients = new List<RecipeIngredient>() };
     private RecipeIngredient newRecipeIngredient = new RecipeIngredient();
     private List<Recipe> recipes = new List<Recipe>();
     private List<Ingredient> ingredients;
@@ -171,38 +169,47 @@
     private List<Recipe> filteredRecipes => string.IsNullOrWhiteSpace(recipeSearchTerm)
         ? recipes
         : recipes.Where(recipe =>
-            recipe.Name.Contains(recipeSearchTerm, StringComparison.OrdinalIgnoreCase) ||
-            recipe.Style.Contains(recipeSearchTerm, StringComparison.OrdinalIgnoreCase) ||
-            recipe.Description.Contains(recipeSearchTerm, StringComparison.OrdinalIgnoreCase))
-        .ToList();
+                recipe.Name.Contains(recipeSearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                recipe.Style.Contains(recipeSearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                recipe.Description.Contains(recipeSearchTerm, StringComparison.OrdinalIgnoreCase))
+            .ToList();
 
     private void OpenRecipeForm()
     {
         isRecipeFormOpen = true;
         selectedRecipe = null;
-        newRecipe = new Recipe();
+        newRecipe = new Recipe { Ingredients = new List<RecipeIngredient>() };
     }
 
     private void CancelRecipe()
     {
         isRecipeFormOpen = false;
         selectedRecipe = null;
-        newRecipe = new Recipe();
+        newRecipe = new Recipe { Ingredients = new List<RecipeIngredient>() };
     }
 
     private void AddRecipeIngredient()
     {
+        if (newRecipe.Ingredients == null)
+        {
+            newRecipe.Ingredients = new List<RecipeIngredient>();
+        }
+
         var ingredient = ingredients.FirstOrDefault(i => i.Id == newRecipeIngredient.IngredientId);
         if (ingredient != null)
         {
-            newRecipe.Ingredients.Add(new RecipeIngredient
+            var copiedIngredient = new RecipeIngredient
             {
                 Id = newRecipe.Ingredients.Count + 1,
                 Ingredient = ingredient,
                 IngredientId = ingredient.Id,
                 Quantity = newRecipeIngredient.Quantity
-            });
+            };
+
+            newRecipe.Ingredients.Add(copiedIngredient);  
         }
+
+        newRecipeIngredient = new RecipeIngredient();
     }
 
     private void RemoveRecipeIngredient(RecipeIngredient ingredientToRemove)
@@ -210,18 +217,14 @@
         newRecipe.Ingredients.Remove(ingredientToRemove);
     }
 
-    private void UpdateIngredientQuantity(RecipeIngredient ingredient)
-    {
-        // This method is triggered when the quantity of an ingredient is changed.
-        // The new value will automatically be reflected due to data binding.
-    }
-
     private void SaveRecipe()
     {
         if (selectedRecipe != null)
         {
-            var index = recipes.IndexOf(selectedRecipe);
-            recipes[index] = newRecipe;
+            selectedRecipe.Name = newRecipe.Name;
+            selectedRecipe.Style = newRecipe.Style;
+            selectedRecipe.Description = newRecipe.Description;
+            selectedRecipe.Ingredients = new List<RecipeIngredient>(newRecipe.Ingredients);
         }
         else
         {
@@ -235,7 +238,20 @@
     private void EditRecipe(Recipe recipe)
     {
         selectedRecipe = recipe;
-        newRecipe = recipe;
+        newRecipe = new Recipe
+        {
+            Id = recipe.Id,
+            Name = recipe.Name,
+            Style = recipe.Style,
+            Description = recipe.Description,
+            Ingredients = recipe.Ingredients.Select(i => new RecipeIngredient
+            {
+                Id = i.Id,
+                Ingredient = i.Ingredient,
+                IngredientId = i.IngredientId,
+                Quantity = i.Quantity
+            }).ToList() 
+        };
         isRecipeFormOpen = true;
     }
 

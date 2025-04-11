@@ -67,10 +67,24 @@ namespace BrewLogix.Services
             _recipes.Remove(recipe);
         }
 
-        public IEnumerable<RecipeIngredient> GetIngredientsForRecipe(int recipeId)
+        public void AddIngredientToRecipe(Recipe recipe, RecipeIngredient newIngredient, List<Ingredient> ingredients)
         {
-            var recipe = GetRecipeById(recipeId);
-            return recipe?.Ingredients ?? Enumerable.Empty<RecipeIngredient>();
+            var ingredient = ingredients.FirstOrDefault(i => i.Id == newIngredient.IngredientId);
+            if (ingredient != null)
+            {
+                recipe.Ingredients.Add(new RecipeIngredient
+                {
+                    Id = recipe.Ingredients.Count + 1,
+                    Ingredient = ingredient,
+                    IngredientId = ingredient.Id,
+                    Quantity = newIngredient.Quantity
+                });
+            }
+        }
+
+        public void RemoveIngredientFromRecipe(Recipe recipe, RecipeIngredient ingredientToRemove)
+        {
+            recipe.Ingredients.Remove(ingredientToRemove);
         }
     }
 }

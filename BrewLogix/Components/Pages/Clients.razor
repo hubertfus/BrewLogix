@@ -1,5 +1,116 @@
+
 @page "/clients"
+@using BrewLogix.Models
+@inject BrewLogix.Services.ClientService ClientService
+@rendermode InteractiveServer
 
 <PageTitle>Clients</PageTitle>
 
-<h3>Clients</h3>
+<h3 class="mb-4">Clients</h3>
+
+<button class="btn btn-primary mb-3" @onclick="() => isFormOpen = true">
+    <i class="bi bi-plus-circle me-2"></i> Add Client
+</button>
+
+@if (isFormOpen)
+{
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Add/Edit Client</h5>
+            <EditForm Model="@newClient" OnValidSubmit="HandleAddClient">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <InputText class="form-control" @bind-Value="newClient.Name" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <InputText type="email" class="form-control" @bind-Value="newClient.ContactEmail" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Address</label>
+                    <InputText class="form-control" @bind-Value="newClient.Address" />
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Add/Edit Client</button>
+                    <button type="button" class="btn btn-secondary" @onclick="() => isFormOpen = false">Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div class="mb-3">
+    <label class="form-label">Search Clients</label>
+    <InputText class="form-control" @bind-Value="searchTerm" placeholder="Search by name, email or address..." />
+</div>
+
+@if (filteredClients?.Any() == true)
+{
+    <div class="card">
+        <ul class="list-group list-group-flush">
+            @foreach (var client in filteredClients)
+            {
+                <li class="list-group-item p-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="mb-2">@client.Name</h5>
+                            <div class="text-muted">
+                                <div><i class="bi bi-envelope me-2"></i>@client.ContactEmail</div>
+                                <div><i class="bi bi-geo-alt me-2"></i>@client.Address</div>
+                            </div>
+                        </div>
+                        <div>
+                            <button class="btn btn-warning btn-sm" @onclick="() => EditClient(client)">Edit</button>
+                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteClient(client)">Delete</button>
+                        </div>
+                    </div>
+                </li>
+            }
+        </ul>
+    </div>
+}
+else
+{
+    <p>No clients found.</p>
+}
+
+@code {
+    private List<Client> clients = new();
+    private Client newClient = new();
+    private bool isFormOpen = false;
+    private string searchTerm = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        clients = ClientService.GetAllClients().ToList();
+    }
+
+    private void HandleAddClient()
+    {
+
+        ClientService.AddClient(newClient);
+
+        newClient = new Client();
+        isFormOpen = false;
+    }
+
+    private void EditClient(Client client)
+    {
+        ClientService.UpdateClient(client);
+        isFormOpen = true;
+    }
+
+    private void DeleteClient(Client client)
+    {
+        ClientService.DeleteClient(client);
+    }
+
+    private IEnumerable<Client> filteredClients =>
+        clients.Where(client => string.IsNullOrWhiteSpace(searchTerm) ||
+                                client.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                                client.ContactEmail.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                                client.Address.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+}

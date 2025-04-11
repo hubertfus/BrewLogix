@@ -1,10 +1,14 @@
 using BrewLogix.Components;
+using BrewLogix.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddSingleton<ClientService>();
+
 
 var app = builder.Build();
 

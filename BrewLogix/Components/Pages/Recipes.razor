@@ -1,5 +1,246 @@
 @page "/recipes"
+@using System.Linq
+@using BrewLogix.Models
+@using BrewLogix.Services
+@inject RecipeService RecipeService
 
-<PageTitle>Recipes</PageTitle>
+@rendermode InteractiveServer
 
-<h3>Recipes</h3>
+<PageTitle>Recipe Management</PageTitle>
+
+<div class="container my-4">
+    <div class="card">
+        <div class="card-header">
+            <h1 class="h3 d-flex align-items-center">
+                <i class="fas fa-book me-3"></i> Recipe Management
+            </h1>
+        </div>
+
+        <div class="card-body">
+            <div class="mb-4 d-flex justify-content-between align-items-center">
+                <button @onclick="OpenRecipeForm" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i> Add Recipe
+                </button>
+
+                <div class="input-group w-25">
+                    <input type="text" class="form-control" placeholder="Search recipes..." @bind="recipeSearchTerm" />
+                </div>
+            </div>
+
+            @if (isRecipeFormOpen)
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        @if (selectedRecipe != null)
+                        {
+                            <h2 class="h4"><i class="fas fa-edit me-2"></i> Edit Recipe</h2>
+                        }
+                        else
+                        {
+                            <h2 class="h4"><i class="fas fa-plus me-2"></i> Add New Recipe</h2>
+                        }
+                    </div>
+                    <div class="card-body">
+                        <EditForm Model="newRecipe" OnValidSubmit="SaveRecipe">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+
+                            <div class="mb-3">
+                                <label for="recipeName" class="form-label">Name</label>
+                                <InputText id="recipeName" @bind-Value="newRecipe.Name" class="form-control" required />
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="recipeStyle" class="form-label">Style</label>
+                                <InputText id="recipeStyle" @bind-Value="newRecipe.Style" class="form-control" required />
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="recipeDescription" class="form-label">Description</label>
+                                <InputTextArea id="recipeDescription" @bind-Value="newRecipe.Description" class="form-control" rows="3" required />
+                            </div>
+
+                            <div class="mb-3">
+                                <h4 class="h5">Recipe Ingredients</h4>
+                                <div class="d-flex gap-2">
+                                    <select @bind="newRecipeIngredient.IngredientId" class="form-select w-50">
+                                        @foreach (var ingredient in ingredients)
+                                        {
+                                            <option value="@ingredient.Id">@ingredient.Name</option>
+                                        }
+                                    </select>
+
+                                    <InputNumber @bind-Value="newRecipeIngredient.Quantity" class="form-control w-25" placeholder="Quantity" />
+
+                                    <button type="button" @onclick="AddRecipeIngredient" class="btn btn-success">
+                                        <i class="fas fa-plus me-2"></i> Add
+                                    </button>
+                                </div>
+
+                                <ul class="list-group mt-3">
+                                    @if (newRecipe.Ingredients != null && newRecipe.Ingredients.Any())
+                                    {
+                                        @foreach (var ingredient in newRecipe.Ingredients)
+                                        {
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                @ingredient.Ingredient.Name -
+                                                <InputNumber @bind-Value="ingredient.Quantity" class="form-control w-25"
+                                                             @onchange="() => UpdateIngredientQuantity(ingredient)" />
+                                                @ingredient.Ingredient.Unit
+                                                <button type="button" class="btn btn-danger btn-sm" @onclick="() => RemoveRecipeIngredient(ingredient)">
+                                                    <i class="fas fa-trash-alt"></i> Delete
+                                                </button>
+                                            </li>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <p>No ingredients added yet.</p>
+                                    }
+                                </ul>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" @onclick="CancelRecipe" class="btn btn-secondary">
+                                    Cancel
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    @if (selectedRecipe != null) { <span>Update Recipe</span> } else { <span>Save Recipe</span> }
+                                </button>
+                            </div>
+                        </EditForm>
+                    </div>
+                </div>
+            }
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="h4">Recipes</h2>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        @foreach (var recipe in filteredRecipes)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="mb-1">@recipe.Name</h5>
+                                    <p class="mb-1 text-muted">@recipe.Style</p>
+                                    <p class="mb-1">@recipe.Description</p>
+                                    <h6 class="mt-2">Ingredients:</h6>
+                                    <ul class="list-group">
+                                        @foreach (var ingredient in recipe.Ingredients)
+                                        {
+                                            <li class="list-group-item">@ingredient.Ingredient.Name - @ingredient.Quantity @ingredient.Ingredient.Unit</li>
+                                        }
+                                    </ul>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <button @onclick="() => EditRecipe(recipe)" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <button @onclick="() => DeleteRecipe(recipe)" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash-alt"></i> Delete
+                                    </button>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] private IngredientService IngredientService { get; set; }
+    private string recipeSearchTerm = string.Empty;
+    private bool isRecipeFormOpen = false;
+    private Recipe selectedRecipe;
+    private Recipe newRecipe = new Recipe();
+    private RecipeIngredient newRecipeIngredient = new RecipeIngredient();
+    private List<Recipe> recipes = new List<Recipe>();
+    private List<Ingredient> ingredients;
+
+    protected override void OnInitialized()
+    {
+        ingredients = IngredientService.GetAllIngredients().ToList();
+        recipes = RecipeService.GetAllRecipes().ToList();
+    }
+
+    private List<Recipe> filteredRecipes => string.IsNullOrWhiteSpace(recipeSearchTerm)
+        ? recipes
+        : recipes.Where(recipe =>
+            recipe.Name.Contains(recipeSearchTerm, StringComparison.OrdinalIgnoreCase) ||
+            recipe.Style.Contains(recipeSearchTerm, StringComparison.OrdinalIgnoreCase) ||
+            recipe.Description.Contains(recipeSearchTerm, StringComparison.OrdinalIgnoreCase))
+        .ToList();
+
+    private void OpenRecipeForm()
+    {
+        isRecipeFormOpen = true;
+        selectedRecipe = null;
+        newRecipe = new Recipe();
+    }
+
+    private void CancelRecipe()
+    {
+        isRecipeFormOpen = false;
+        selectedRecipe = null;
+        newRecipe = new Recipe();
+    }
+
+    private void AddRecipeIngredient()
+    {
+        var ingredient = ingredients.FirstOrDefault(i => i.Id == newRecipeIngredient.IngredientId);
+        if (ingredient != null)
+        {
+            newRecipe.Ingredients.Add(new RecipeIngredient
+            {
+                Id = newRecipe.Ingredients.Count + 1,
+                Ingredient = ingredient,
+                IngredientId = ingredient.Id,
+                Quantity = newRecipeIngredient.Quantity
+            });
+        }
+    }
+
+    private void RemoveRecipeIngredient(RecipeIngredient ingredientToRemove)
+    {
+        newRecipe.Ingredients.Remove(ingredientToRemove);
+    }
+
+    private void UpdateIngredientQuantity(RecipeIngredient ingredient)
+    {
+        // This method is triggered when the quantity of an ingredient is changed.
+        // The new value will automatically be reflected due to data binding.
+    }
+
+    private void SaveRecipe()
+    {
+        if (selectedRecipe != null)
+        {
+            var index = recipes.IndexOf(selectedRecipe);
+            recipes[index] = newRecipe;
+        }
+        else
+        {
+            newRecipe.Id = recipes.Count + 1;
+            recipes.Add(newRecipe);
+        }
+
+        CancelRecipe();
+    }
+
+    private void EditRecipe(Recipe recipe)
+    {
+        selectedRecipe = recipe;
+        newRecipe = recipe;
+        isRecipeFormOpen = true;
+    }
+
+    private void DeleteRecipe(Recipe recipe)
+    {
+        recipes.Remove(recipe);
+    }
+}

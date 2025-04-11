@@ -10,6 +10,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddSingleton<ClientService>();
 builder.Services.AddSingleton<IngredientService>();
 builder.Services.AddSingleton<StockEntriesService>();
+builder.Services.AddScoped<RecipeService>();
 
 
 var app = builder.Build();

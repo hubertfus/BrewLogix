@@ -9,7 +9,6 @@
 
 <h3 class="mb-4">Ingredients & Stocks</h3>
 
-<!-- Add buttons -->
 <div class="d-flex gap-2 mb-4">
     <button class="btn btn-primary" @onclick="() => isIngredientFormOpen = true">
         <i class="bi bi-plus-circle me-2"></i> Add Ingredient
@@ -19,7 +18,6 @@
     </button>
 </div>
 
-<!-- Add Ingredient Form -->
 @if (isIngredientFormOpen)
 {
     <div class="card mb-4">
@@ -49,7 +47,6 @@
     </div>
 }
 
-<!-- Add Stock Entry Form -->
 @if (isStockEntryFormOpen)
 {
     <div class="card mb-4">
@@ -84,7 +81,6 @@
     </div>
 }
 
-<!-- Search Bars -->
 <div class="row mb-4">
     <div class="col-md-6">
         <label class="form-label">Search Ingredients</label>
@@ -96,7 +92,6 @@
     </div>
 </div>
 
-<!-- Ingredient List -->
 <div class="card mb-4">
     <div class="card-header"><strong>Ingredients</strong></div>
     <ul class="list-group list-group-flush">
@@ -115,17 +110,15 @@
     </ul>
 </div>
 
-<!-- Stock Entry List -->
 <div class="card">
     <div class="card-header"><strong>Stock Entries</strong></div>
     <ul class="list-group list-group-flush">
         @foreach (var entry in FilteredStockEntries)
         {
-            var ingredient = ingredients.FirstOrDefault(i => i.Id == entry.IngredientId);
             <li class="list-group-item d-flex justify-content-between align-items-center">
                 <div>
-                    <strong>@ingredient?.Name</strong>
-                    <span class="text-muted">@entry.Quantity @ingredient?.Unit • @entry.DeliveryDate.ToString("yyyy-MM-dd")</span>
+                    <strong>@entry.Ingredient?.Name</strong>
+                    <span class="text-muted">@entry.Quantity @entry.Ingredient?.Unit • @entry.DeliveryDate.ToString("yyyy-MM-dd")</span>
                 </div>
                 <div>
                     <button class="btn btn-warning btn-sm me-2" @onclick="() => EditStockEntry(entry)">Edit</button>

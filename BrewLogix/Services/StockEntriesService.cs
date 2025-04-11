@@ -5,14 +5,17 @@ namespace BrewLogix.Services;
 public class StockEntriesService
 {
     private readonly List<StockEntry> _stockEntries;
+    private readonly IngredientService _ingredientService;
 
-    public StockEntriesService()
+    public StockEntriesService(IngredientService ingredientService)
     {
+        _ingredientService = ingredientService;
+        var ingredients = _ingredientService.GetAllIngredients().ToList();
         _stockEntries = new List<StockEntry>
         {
-            new StockEntry { Id = 1, IngredientId = 1, Quantity = 50, DeliveryDate = DateTime.Now, ExpiryDate = DateTime.Now.AddMonths(6) },
-            new StockEntry { Id = 2, IngredientId = 2, Quantity = 200, DeliveryDate = DateTime.Now, ExpiryDate = DateTime.Now.AddMonths(3) },
-            new StockEntry { Id = 2, IngredientId = 2, Quantity = 2137, DeliveryDate = DateTime.Now, ExpiryDate = DateTime.Now.AddMonths(3) }
+            new StockEntry { Id = 1, Ingredient = ingredients[0], Quantity = 50, DeliveryDate = DateTime.Now, ExpiryDate = DateTime.Now.AddMonths(6) },
+            new StockEntry { Id = 2, Ingredient = ingredients[1], Quantity = 200, DeliveryDate = DateTime.Now, ExpiryDate = DateTime.Now.AddMonths(3) },
+            new StockEntry { Id = 2, Ingredient = ingredients[0], Quantity = 2137, DeliveryDate = DateTime.Now, ExpiryDate = DateTime.Now.AddMonths(3) }
         };
     }
     

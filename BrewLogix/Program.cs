@@ -1,4 +1,5 @@
 using BrewLogix.Components;
+using BrewLogix.Models;
 using BrewLogix.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +12,9 @@ builder.Services.AddSingleton<ClientService>();
 builder.Services.AddSingleton<IngredientService>();
 builder.Services.AddSingleton<StockEntriesService>();
 builder.Services.AddScoped<RecipeService>();
+builder.Services.AddScoped<BatchService>();
+builder.Services.AddScoped<KegService>();
+builder.Services.AddScoped<BatchLogService>();
 
 
 var app = builder.Build();

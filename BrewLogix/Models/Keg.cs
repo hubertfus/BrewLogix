@@ -8,6 +8,7 @@ public interface IDistributable
 
 public class Keg : BaseEntity, IDistributable
 {
+    public string Code { get; set; }
     public int BatchId { get; set; }
     public Batch Batch { get; set; }
 

@@ -13,6 +13,5 @@ public class Batch : BaseEntity
     public string Status { get; set; } 
 
     public ICollection<BatchLog> Logs { get; set; }
-    public ICollection<FermentationEntry> FermentationData { get; set; }
     public ICollection<Keg> Kegs { get; set; }
 }

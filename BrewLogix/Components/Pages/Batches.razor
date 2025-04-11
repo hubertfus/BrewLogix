@@ -1,5 +1,163 @@
 @page "/batches"
+@using BrewLogix.Models
+@inject BrewLogix.Services.BatchService BatchService
+@inject BrewLogix.Services.RecipeService RecipeService
+@inject BrewLogix.Services.KegService KegService
+@inject BrewLogix.Services.BatchLogService BatchLogService
+@rendermode InteractiveServer
 
 <PageTitle>Batches</PageTitle>
 
-<h3>Batches</h3>
+<h3 class="mb-4">Batches</h3>
+
+<button class="btn btn-primary mb-3" @onclick="() => OpenBatchForm()">
+    <i class="bi bi-plus-circle me-2"></i> Add Batch
+</button>
+
+@if (isBatchFormOpen)
+{
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title mb-3">@((newBatch.Id == 0) ? "Add Batch" : "Edit Batch")</h5>
+            <EditForm Model="@newBatch" OnValidSubmit="HandleAddBatch">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label class="form-label">Batch Code</label>
+                    <InputText class="form-control" @bind-Value="newBatch.Code" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Recipe</label>
+                    <InputSelect class="form-control" @bind-Value="newBatch.RecipeId">
+                        <option value="">Select Recipe</option>
+                        @foreach (var recipe in recipes)
+                        {
+                            <option value="@recipe.Id">@recipe.Name</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Start Date</label>
+                    <InputDate class="form-control" @bind-Value="newBatch.StartDate" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">End Date</label>
+                    <InputDate class="form-control" @bind-Value="newBatch.EndDate" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Status</label>
+                    <InputText class="form-control" @bind-Value="newBatch.Status" />
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">@((newBatch.Id == 0) ? "Add Batch" : "Update Batch")</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CancelBatchForm">Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div class="mb-3">
+    <label class="form-label">Search Batches</label>
+    <InputText class="form-control" @bind-Value="searchBatchTerm" placeholder="Search by code, recipe, or status..." />
+</div>
+
+@if (filteredBatches?.Any() == true)
+{
+    <div class="card">
+        <ul class="list-group list-group-flush">
+            @foreach (var batch in filteredBatches)
+            {
+                <li class="list-group-item p-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="mb-2">@batch.Code</h5>
+                            <div class="text-muted">
+                                <div><i class="bi bi-calendar me-2"></i>@batch.StartDate.ToShortDateString() - @(batch.EndDate?.ToShortDateString() ?? "Ongoing")</div>
+                                <div><i class="bi bi-gear me-2"></i>@batch.Status</div>
+                            </div>
+                        </div>
+                        <div>
+                            <button class="btn btn-warning btn-sm" @onclick="() => EditBatch(batch)">Edit</button>
+                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteBatch(batch)">Delete</button>
+                        </div>
+                    </div>
+                </li>
+            }
+        </ul>
+    </div>
+}
+else
+{
+    <p>No batches found.</p>
+}
+
+@code {
+    private List<Batch> batches = new();
+    private List<Recipe> recipes = new();
+    private Batch newBatch = new();
+    private bool isBatchFormOpen = false;
+    private string searchBatchTerm = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        batches = BatchService.GetAllBatches().ToList();
+        recipes = RecipeService.GetAllRecipes().ToList();
+    }
+
+    private void OpenBatchForm()
+    {
+        newBatch = new Batch();
+        isBatchFormOpen = true;
+    }
+
+    private void CancelBatchForm()
+    {
+        isBatchFormOpen = false;
+        newBatch = new Batch();  
+    }
+
+    private void HandleAddBatch()
+    {
+        if (newBatch.Id == 0)
+        {
+            BatchService.AddBatch(newBatch);
+        }
+        else
+        {
+            BatchService.UpdateBatch(newBatch);
+        }
+
+        newBatch = new Batch();  
+        isBatchFormOpen = false; 
+        batches = BatchService.GetAllBatches().ToList(); 
+    }
+
+    private void EditBatch(Batch batch)
+    {
+        newBatch = new Batch
+        {
+            Id = batch.Id,
+            Code = batch.Code,
+            RecipeId = batch.RecipeId,
+            StartDate = batch.StartDate,
+            EndDate = batch.EndDate,
+            Status = batch.Status
+        };
+
+        isBatchFormOpen = true;
+    }
+
+    private void DeleteBatch(Batch batch)
+    {
+        BatchService.DeleteBatch(batch);
+        batches = BatchService.GetAllBatches().ToList(); 
+    }
+
+    private IEnumerable<Batch> filteredBatches =>
+        batches.Where(batch => string.IsNullOrWhiteSpace(searchBatchTerm) ||
+                                batch.Code.Contains(searchBatchTerm, StringComparison.OrdinalIgnoreCase) ||
+                                batch.Status.Contains(searchBatchTerm, StringComparison.OrdinalIgnoreCase) ||
+                                recipes.Any(r => r.Id == batch.RecipeId && r.Name.Contains(searchBatchTerm, StringComparison.OrdinalIgnoreCase)));
+}

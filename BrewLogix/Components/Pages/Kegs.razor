@@ -1,5 +1,162 @@
 @page "/kegs"
+@using BrewLogix.Models
+@inject BrewLogix.Services.KegService KegService
+@inject BrewLogix.Services.BatchService BatchService
+@rendermode InteractiveServer
 
 <PageTitle>Kegs</PageTitle>
 
-<h3>Kegs</h3>
+<h3 class="mb-4">Kegs</h3>
+
+<button class="btn btn-primary mb-3" @onclick="() => OpenKegForm()">
+    <i class="bi bi-plus-circle me-2"></i> Add Keg
+</button>
+
+@if (isKegFormOpen)
+{
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title mb-3">@((newKeg.Id == 0) ? "Add Keg" : "Edit Keg")</h5>
+            <EditForm Model="@newKeg" OnValidSubmit="HandleAddKeg">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label class="form-label">Keg Code</label>
+                    <InputText class="form-control" @bind-Value="newKeg.Code" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Batch</label>
+                    <InputSelect class="form-control" @bind-Value="newKeg.BatchId">
+                        <option value="">Select Batch</option>
+                        @foreach (var batch in batches)
+                        {
+                            <option value="@batch.Id">@batch.Code</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Size</label>
+                    <InputText class="form-control" @bind-Value="newKeg.Size" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Is Distributed?</label>
+                    <InputCheckbox class="form-check-input" @bind-Value="newKeg.IsDistributed" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Filled At</label>
+                    <InputDate class="form-control" @bind-Value="newKeg.FilledAt" />
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">@((newKeg.Id == 0) ? "Add Keg" : "Update Keg")</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CancelKegForm">Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div class="mb-3">
+    <label class="form-label">Search Kegs</label>
+    <InputText class="form-control" @bind-Value="searchKegTerm" placeholder="Search by code or batch..." />
+</div>
+
+@if (filteredKegs?.Any() == true)
+{
+    <div class="card">
+        <ul class="list-group list-group-flush">
+            @foreach (var keg in filteredKegs)
+            {
+                <li class="list-group-item p-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="mb-2">@keg.Code</h5>
+                            <div class="text-muted">
+                                <div><i class="bi bi-box me-2"></i>@keg.Size</div>
+                                <div><i class="bi bi-calendar me-2"></i>Filled: @keg.FilledAt.ToShortDateString()</div>
+                                <div><i class="bi bi-gear me-2"></i>@(keg.IsDistributed ? "Distributed" : "Not Distributed")</div>
+                            </div>
+                        </div>
+                        <div>
+                            <button class="btn btn-warning btn-sm" @onclick="() => EditKeg(keg)">Edit</button>
+                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteKeg(keg)">Delete</button>
+                        </div>
+                    </div>
+                </li>
+            }
+        </ul>
+    </div>
+}
+else
+{
+    <p>No kegs found.</p>
+}
+
+@code {
+    private List<Keg> kegs = new();
+    private List<Batch> batches = new();
+    private Keg newKeg = new();
+    private bool isKegFormOpen = false;
+    private string searchKegTerm = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        kegs = KegService.GetAllKegs().ToList();
+        batches = BatchService.GetAllBatches().ToList();
+    }
+
+    private void OpenKegForm()
+    {
+        newKeg = new Keg();  
+        isKegFormOpen = true;
+    }
+
+    private void CancelKegForm()
+    {
+        isKegFormOpen = false;
+        newKeg = new Keg();  
+    }
+
+    private void HandleAddKeg()
+    {
+        if (newKeg.Id == 0) 
+        {
+            KegService.AddKeg(newKeg);
+        }
+        else 
+        {
+            KegService.UpdateKeg(newKeg);
+        }
+
+        newKeg = new Keg();  
+        isKegFormOpen = false; 
+        kegs = KegService.GetAllKegs().ToList(); 
+    }
+
+    private void EditKeg(Keg keg)
+    {
+        newKeg = new Keg
+        {
+            Id = keg.Id,
+            Code = keg.Code,
+            BatchId = keg.BatchId,
+            Size = keg.Size,
+            IsDistributed = keg.IsDistributed,
+            FilledAt = keg.FilledAt
+        };
+
+        isKegFormOpen = true;
+    }
+
+    private void DeleteKeg(Keg keg)
+    {
+        KegService.DeleteKeg(keg);
+        kegs = KegService.GetAllKegs().ToList(); 
+    }
+
+    private IEnumerable<Keg> filteredKegs =>
+        kegs.Where(keg => string.IsNullOrWhiteSpace(searchKegTerm) ||
+                          keg.Code.Contains(searchKegTerm, StringComparison.OrdinalIgnoreCase) ||
+                          keg.Size.Contains(searchKegTerm, StringComparison.OrdinalIgnoreCase) ||
+                          batches.Any(b => b.Id == keg.BatchId && b.Code.Contains(searchKegTerm, StringComparison.OrdinalIgnoreCase)));
+}

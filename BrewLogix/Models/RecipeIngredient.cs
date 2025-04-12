@@ -9,4 +9,7 @@ public class RecipeIngredient : BaseEntity
     public Ingredient Ingredient { get; set; }
 
     public decimal Quantity { get; set; }
+        
+    public int SelectedStockEntryId { get; set; } 
+
 }

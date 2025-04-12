@@ -18,13 +18,14 @@ namespace BrewLogix.Services
                     Recipe = new Recipe { Id = 1, Name = "Pale Ale" },
                     StartDate = DateTime.Now,
                     Status = "In Progress",
-                    Logs = new List<BatchLog>
-                    {
-                        new BatchLog { Id = 1, BatchId = 1, Timestamp = DateTime.Now, Note = "Batch started" }
-                    },
                     Kegs = new List<Keg>
                     {
                         new Keg { Id = 1, Size = "5L", FilledAt = DateTime.Now, IsDistributed = false }
+                    },
+                    StockEntries = new List<StockEntry>
+                    {
+                        new StockEntry { Id = 1, Ingredient = new Ingredient { Id = 1, Name = "Hops", Type = "Bittering", Unit = "g" }, Quantity = 100, DeliveryDate = DateTime.Now, ExpiryDate = DateTime.Now.AddMonths(6) },
+                        new StockEntry { Id = 2, Ingredient = new Ingredient { Id = 2, Name = "Barley", Type = "Grain", Unit = "kg" }, Quantity = 150, DeliveryDate = DateTime.Now, ExpiryDate = DateTime.Now.AddMonths(12) }
                     }
                 },
                 new Batch
@@ -35,13 +36,32 @@ namespace BrewLogix.Services
                     Recipe = new Recipe { Id = 2, Name = "IPA" },
                     StartDate = DateTime.Now.AddDays(-5),
                     Status = "Fermentation",
-                    Logs = new List<BatchLog>
-                    {
-                        new BatchLog { Id = 2, BatchId = 2, Timestamp = DateTime.Now, Note = "Fermentation started" }
-                    },
                     Kegs = new List<Keg>
                     {
                         new Keg { Id = 2, Size = "10L", FilledAt = DateTime.Now.AddDays(-2), IsDistributed = false }
+                    },
+                    StockEntries = new List<StockEntry>
+                    {
+                        new StockEntry { Id = 3, Ingredient = new Ingredient { Id = 1, Name = "Hops", Type = "Bittering", Unit = "g" }, Quantity = 250, DeliveryDate = DateTime.Now, ExpiryDate = DateTime.Now.AddMonths(6) },
+                        new StockEntry { Id = 4, Ingredient = new Ingredient { Id = 3, Name = "Yeast", Type = "Fermentation", Unit = "g" }, Quantity = 30, DeliveryDate = DateTime.Now, ExpiryDate = DateTime.Now.AddMonths(3) }
+                    }
+                },
+                new Batch
+                {
+                    Id = 3,
+                    Code = "BATCH003",
+                    RecipeId = 2,
+                    Recipe = new Recipe { Id = 2, Name = "IPA" },
+                    StartDate = DateTime.Now.AddDays(-10),
+                    
+                    Status = "Completed",
+                    Kegs = new List<Keg>
+                    {
+                        new Keg { Id = 3, Size = "5L", FilledAt = DateTime.Now.AddDays(-3), IsDistributed = true }
+                    },
+                    StockEntries = new List<StockEntry>
+                    {
+                        new StockEntry { Id = 3, Ingredient = new Ingredient { Id = 1, Name = "Hops", Type = "Bittering", Unit = "g" }, Quantity = 250, DeliveryDate = DateTime.Now, ExpiryDate = DateTime.Now.AddMonths(6) },
                     }
                 }
             };

@@ -40,10 +40,6 @@
                     <InputText class="form-control" @bind-Value="newKeg.Size" />
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Is Distributed?</label>
-                    <InputCheckbox class="form-check-input" @bind-Value="newKeg.IsDistributed" />
-                </div>
-                <div class="mb-3">
                     <label class="form-label">Filled At</label>
                     <InputDate class="form-control" @bind-Value="newKeg.FilledAt" />
                 </div>
@@ -72,7 +68,7 @@
                         <div>
                             <h5 class="mb-2">@keg.Code</h5>
                             <div class="text-muted">
-                                <div><i class="bi bi-box me-2"></i>@keg.Size</div>
+                                <div><i class="bi bi-box me-2"></i>@keg.Size L</div>
                                 <div><i class="bi bi-calendar me-2"></i>Filled: @keg.FilledAt.ToShortDateString()</div>
                                 <div><i class="bi bi-gear me-2"></i>@(keg.IsDistributed ? "Distributed" : "Not Distributed")</div>
                             </div>
@@ -107,7 +103,10 @@ else
 
     private void OpenKegForm()
     {
-        newKeg = new Keg();  
+        newKeg = new Keg
+        {
+            FilledAt = DateTime.Today
+        };  
         isKegFormOpen = true;
     }
 

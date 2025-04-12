@@ -216,7 +216,10 @@
         }
 
         stockEntries = StockEntriesService.GetAllStockEntries().ToList();
-        newStockEntry = new();
+        newStockEntry = new StockEntry
+        {
+            DeliveryDate = DateTime.Today
+        };
         isStockEntryFormOpen = false;
     }
 

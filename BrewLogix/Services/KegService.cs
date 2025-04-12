@@ -10,8 +10,8 @@ namespace BrewLogix.Services
         {
             _kegs = new List<Keg>
             {
-                new Keg { Id = 1, Code = "KEG 001", Size = "5L", IsDistributed = false, FilledAt = DateTime.Now },
-                new Keg { Id = 2, Code = "KEG 002", Size = "10L", IsDistributed = false, FilledAt = DateTime.Now }
+                new Keg { Id = 1, Code = "KEG 001", Size = "5", IsDistributed = false, FilledAt = DateTime.Now },
+                new Keg { Id = 2, Code = "KEG 002", Size = "10", IsDistributed = false, FilledAt = DateTime.Now }
             };
         }
 

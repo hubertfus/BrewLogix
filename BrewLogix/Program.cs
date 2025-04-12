@@ -14,8 +14,6 @@ builder.Services.AddSingleton<StockEntriesService>();
 builder.Services.AddScoped<RecipeService>();
 builder.Services.AddScoped<BatchService>();
 builder.Services.AddScoped<KegService>();
-builder.Services.AddScoped<BatchLogService>();
-
 
 var app = builder.Build();
 

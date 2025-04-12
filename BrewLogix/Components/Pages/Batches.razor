@@ -3,7 +3,6 @@
 @inject BrewLogix.Services.BatchService BatchService
 @inject BrewLogix.Services.RecipeService RecipeService
 @inject BrewLogix.Services.KegService KegService
-@inject BrewLogix.Services.BatchLogService BatchLogService
 @rendermode InteractiveServer
 
 <PageTitle>Batches</PageTitle>
@@ -108,7 +107,10 @@ else
 
     private void OpenBatchForm()
     {
-        newBatch = new Batch();
+        newBatch = new Batch
+        {
+            StartDate = DateTime.Today
+        };
         isBatchFormOpen = true;
     }
 

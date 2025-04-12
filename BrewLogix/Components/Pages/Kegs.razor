@@ -70,6 +70,7 @@
                             <div class="text-muted">
                                 <div><i class="bi bi-box me-2"></i>@keg.Size L</div>
                                 <div><i class="bi bi-calendar me-2"></i>Filled: @keg.FilledAt.ToShortDateString()</div>
+                                <div><i class="bi bi-calendar me-2"></i>Recipe: @(keg.Batch?.Recipe?.Name ?? "No Recipe")</div>
                                 <div><i class="bi bi-gear me-2"></i>@(keg.IsDistributed ? "Distributed" : "Not Distributed")</div>
                             </div>
                         </div>
@@ -118,27 +119,38 @@ else
 
     private void HandleAddKeg()
     {
-        if (newKeg.Id == 0) 
+        if (newKeg.BatchId == 0)
+        {
+            // Handle case when BatchId is not selected or is invalid
+            newKeg.BatchId = batches.FirstOrDefault()?.Id ?? 0;
+        }
+
+        newKeg.Batch = batches.Find(batch => batch.Id == newKeg.BatchId);
+        if (newKeg.Id == 0)
         {
             KegService.AddKeg(newKeg);
         }
-        else 
+        else
         {
             KegService.UpdateKeg(newKeg);
         }
 
         newKeg = new Keg();  
-        isKegFormOpen = false; 
-        kegs = KegService.GetAllKegs().ToList(); 
+        isKegFormOpen = false;
+        kegs = KegService.GetAllKegs().ToList();
     }
+
+
 
     private void EditKeg(Keg keg)
     {
+        Console.WriteLine(keg.Batch.Id);
         newKeg = new Keg
         {
             Id = keg.Id,
             Code = keg.Code,
-            BatchId = keg.BatchId,
+            BatchId = keg.Batch.Id,
+            Batch = keg.Batch,
             Size = keg.Size,
             IsDistributed = keg.IsDistributed,
             FilledAt = keg.FilledAt

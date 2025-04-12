@@ -5,9 +5,11 @@ namespace BrewLogix.Services
     public class BatchService
     {
         private readonly List<Batch> _batches;
+        private readonly List<Recipe> _recipes;
 
-        public BatchService()
+        public BatchService(RecipeService recipeService)
         {
+            _recipes = recipeService.GetAllRecipes().ToList();
             _batches = new List<Batch>
             {
                 new Batch
@@ -33,7 +35,7 @@ namespace BrewLogix.Services
                     Id = 2,
                     Code = "BATCH002",
                     RecipeId = 2,
-                    Recipe = new Recipe { Id = 2, Name = "IPA" },
+                    Recipe = _recipes[0],
                     StartDate = DateTime.Now.AddDays(-5),
                     Status = "Fermentation",
                     Kegs = new List<Keg>
@@ -51,7 +53,7 @@ namespace BrewLogix.Services
                     Id = 3,
                     Code = "BATCH003",
                     RecipeId = 2,
-                    Recipe = new Recipe { Id = 2, Name = "IPA" },
+                    Recipe = _recipes[1],
                     StartDate = DateTime.Now.AddDays(-10),
                     
                     Status = "Completed",

@@ -57,12 +57,13 @@
                 <ValidationSummary />
                 <div class="mb-3">
                     <label class="form-label">Ingredient</label>
-                    <select class="form-select" @bind="newStockEntry.IngredientId">
+                    <InputSelect class="form-select" @bind-Value="newStockEntry.IngredientId">
+                        <option value="">-- Select Ingredient --</option>
                         @foreach (var ingredient in ingredients)
                         {
                             <option value="@ingredient.Id">@ingredient.Name</option>
                         }
-                    </select>
+                    </InputSelect>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Quantity</label>
@@ -206,6 +207,7 @@
 
     private void HandleAddOrUpdateStockEntry()
     {
+        newStockEntry.Ingredient = ingredients.Find(ingredient => ingredient.Id == newStockEntry.IngredientId);
         if (newStockEntry.Id == 0)
         {
             StockEntriesService.AddStockEntry(newStockEntry);
@@ -228,12 +230,16 @@
         newStockEntry = new StockEntry
         {
             Id = entry.Id,
-            IngredientId = entry.IngredientId,
+            IngredientId = entry.Ingredient.Id,
+            Ingredient = entry.Ingredient,
             Quantity = entry.Quantity,
             DeliveryDate = entry.DeliveryDate
         };
+
         isStockEntryFormOpen = true;
     }
+
+
 
     private void DeleteStockEntry(StockEntry entry)
     {

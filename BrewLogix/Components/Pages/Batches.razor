@@ -134,6 +134,7 @@
                             <h5 class="mb-2">@batch.Code</h5>
                             <div class="text-muted">
                                 <div><i class="bi bi-calendar me-2"></i>@batch.StartDate.ToShortDateString() - @(batch.EndDate?.ToShortDateString() ?? "Ongoing")</div>
+                                <div><i class="bi bi-gear me-2"></i>@batch.Recipe.Name</div>
                                 <div><i class="bi bi-gear me-2"></i>@batch.Status</div>
                             </div>
                         </div>
@@ -187,7 +188,8 @@ else
     private void HandleAddBatch()
     {
         errorMessage = null;
-
+        newBatch.StartDate = DateTime.SpecifyKind(newBatch.StartDate, DateTimeKind.Utc);
+        newBatch.EndDate = DateTime.SpecifyKind(newBatch.EndDate?? DateTime.Now, DateTimeKind.Utc);
         if (newBatch.Id == 0)
         {
             var selectedRecipe = recipes.FirstOrDefault(r => r.Id == newBatch.RecipeId);
@@ -196,9 +198,8 @@ else
                 foreach (var ingredientEntry in selectedRecipe.Ingredients)
                 {
                     var selectedStockId = ingredientEntry.SelectedStockEntryId;
-                    Console.WriteLine(ingredientEntry.Ingredient.Name);
                     var stockEntry = StockEntriesService.GetStockEntry(selectedStockId);
-
+                    
                     if (stockEntry != null)
                     {
                         if (stockEntry.Quantity < ingredientEntry.Quantity)

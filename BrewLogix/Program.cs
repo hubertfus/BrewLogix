@@ -1,6 +1,7 @@
 using BrewLogix.Components;
 using BrewLogix.Models;
 using BrewLogix.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,12 +9,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddSingleton<ClientService>();
+// builder.Services.AddSingleton<ClientService>();
 builder.Services.AddSingleton<IngredientService>();
 builder.Services.AddSingleton<StockEntriesService>();
 builder.Services.AddScoped<RecipeService>();
 builder.Services.AddScoped<BatchService>();
 builder.Services.AddScoped<KegService>();
+builder.Services.AddScoped<OrderService>();
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddScoped<ClientService>();
+
 
 var app = builder.Build();
 

@@ -12,8 +12,9 @@ namespace BrewLogix.Services
             _batches = batchService.GetAllBatches().ToList();
             _kegs = new List<Keg>
             {
-                new Keg { Id = 1, Code = "KEG 001", Size = "5", IsDistributed = false, FilledAt = DateTime.Now, Batch = _batches[0]},
-                new Keg { Id = 2, Code = "KEG 002", Size = "10", IsDistributed = false, FilledAt = DateTime.Now, Batch = _batches[1] }
+                new Keg { Id = 1, Code = "KEG 001", Size = "5", IsDistributed = true, FilledAt = DateTime.Now, Batch = _batches[0]},
+                new Keg { Id = 2, Code = "KEG 002", Size = "10", IsDistributed = true, FilledAt = DateTime.Now, Batch = _batches[1] },
+                new Keg { Id = 3, Code = "KEG 003", Size = "10", IsDistributed = false, FilledAt = DateTime.Now, Batch = _batches[1] }
             };
         }
 

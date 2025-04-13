@@ -1,5 +1,225 @@
 @page "/orders"
+@using BrewLogix.Models
+@inject BrewLogix.Services.ClientService ClientService
+@inject BrewLogix.Services.KegService KegService
+@inject BrewLogix.Services.OrderService OrderService
+@rendermode InteractiveServer
 
 <PageTitle>Orders</PageTitle>
 
-<h3>Orders</h3>
+<h3 class="mb-4">Orders</h3>
+
+<button class="btn btn-primary mb-3" @onclick="() => OpenOrderForm()">
+    <i class="bi bi-plus-circle me-2"></i> Add Order
+</button>
+
+@if (isFormOpen)
+{
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title mb-3">@((newOrder.Id == 0) ? "Add Order" : "Edit Order")</h5>
+            <EditForm Model="@newOrder" OnValidSubmit="HandleAddOrder">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label class="form-label">Client</label>
+                    <InputSelect class="form-select" @bind-Value="newOrder.ClientId">
+                        <option value="">-- Select Client --</option>
+                        @foreach (var client in clients)
+                        {
+                            <option value="@client.Id">@client.Name</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Status</label>
+                    <InputText class="form-control" @bind-Value="newOrder.Status" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Kegs</label>
+                    <InputText class="form-control" @bind-Value="searchTerm" placeholder="Search for Keg" @oninput="SearchKegs" />
+                    <ul class="list-group mt-2">
+                        @foreach (var keg in filteredKegs)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                @keg.Code (@keg.Size)L
+                                <div class="btn btn-sm btn-secondary"
+                                     @onclick="() => AddKegToOrder(keg)">
+                                    Add
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Selected Kegs</label>
+                    <ul class="list-group">
+                        @foreach (var selectedKeg in newOrder.Kegs)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                @selectedKeg.Code (@selectedKeg.Size)L
+                                <div class="btn btn-sm btn-danger" @onclick="() => RemoveKegFromOrder(selectedKeg)">Remove</div>
+                            </li>
+                        }
+                    </ul>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">@((newOrder.Id == 0) ? "Add Order" : "Update Order")</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CancelForm">Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@if (orders?.Any() == true)
+{
+    <div class="card">
+        <ul class="list-group list-group-flush">
+            @foreach (var order in orders)
+            {
+                var client = clients.FirstOrDefault(c => c.Id == order.ClientId);
+                <li class="list-group-item p-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="mb-2">Order #@order.Id - @client?.Name</h5>
+                            <div class="text-muted">
+                                <div><strong>Status:</strong> @order.Status</div>
+                                <div><strong>Date:</strong> @order.OrderedAt.ToString("yyyy-MM-dd HH:mm")</div>
+                                <div><strong>Kegs:</strong> @string.Join(", ", order.Kegs?.Select(k => k.Code))</div>
+                            </div>
+                        </div>
+                        <div>
+                            <button class="btn btn-warning btn-sm" @onclick="() => EditOrder(order)">Edit</button>
+                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteOrder(order)">Delete</button>
+                        </div>
+                    </div>
+                </li>
+            }
+        </ul>
+    </div>
+}
+else
+{
+    <p>No orders available.</p>
+}
+
+@code {
+    private List<Order> orders = new();
+    private List<Client> clients = new();
+    private List<Keg> kegs = new();
+    private List<Keg> filteredKegs = new();
+    private string searchTerm = string.Empty;
+    private Order newOrder = new();
+    private bool isFormOpen = false;
+
+    protected override void OnInitialized()
+    {
+        orders = OrderService.GetAllOrders().ToList();
+        clients = ClientService.GetAllClients().ToList();
+        kegs = KegService.GetAllKegs().ToList();
+        filteredKegs = kegs; // Initially show all kegs
+    }
+
+    private void OpenOrderForm()
+    {
+        newOrder = new Order
+        {
+            Kegs = new List<Keg>() // Initialize with an empty list to prevent pre-selection
+        };
+        SearchKegs();  // Refresh the keg list
+        isFormOpen = true;
+    }
+
+    private void CancelForm()
+    {
+        isFormOpen = false;
+        newOrder = new Order();
+    }
+
+    private void HandleAddOrder()
+    {
+        try
+        {
+            // Mark kegs as distributed only when the order is saved
+            foreach (var keg in newOrder.Kegs)
+            {
+                keg.IsDistributed = true;  // Mark the kegs as assigned
+            }
+
+            if (newOrder.Id == 0)
+            {
+                OrderService.AddOrder(newOrder);
+            }
+            else
+            {
+                OrderService.UpdateOrder(newOrder);
+            }
+
+            isFormOpen = false;
+            orders = OrderService.GetAllOrders().ToList(); // Refresh the orders list
+        }
+        catch (Exception ex)
+        {
+            // Handle error (log or display message)
+        }
+    }
+
+    private void EditOrder(Order order)
+    {
+        newOrder = new Order
+        {
+            Id = order.Id,
+            ClientId = order.ClientId,
+            OrderedAt = order.OrderedAt,
+            Status = order.Status,
+            Kegs = order.Kegs // Load selected kegs from the existing order
+        };
+        isFormOpen = true;
+    }
+
+    private void DeleteOrder(Order order)
+    {
+        try
+        {
+            OrderService.DeleteOrder(order);
+            orders = OrderService.GetAllOrders().ToList(); // Refresh the orders list
+        }
+        catch (Exception ex)
+        {
+            // Handle error (log or display message)
+        }
+    }
+
+    private void AddKegToOrder(Keg keg)
+    {
+        // Temporarily add the keg to the order list, but don't save to database yet
+        if (!newOrder.Kegs.Contains(keg))
+        {
+            newOrder.Kegs.Add(keg);
+        }
+    }
+
+    private void RemoveKegFromOrder(Keg keg)
+    {
+        // Temporarily remove the keg from the order list, but don't save to database yet
+        newOrder.Kegs.Remove(keg);
+    }
+
+    private void SearchKegs()
+    {
+        if (string.IsNullOrEmpty(searchTerm))
+        {
+            filteredKegs = kegs.Where(k => !k.IsDistributed || newOrder.Kegs.Contains(k)).ToList(); // Include kegs in the order
+        }
+        else
+        {
+            filteredKegs = kegs.Where(k => k.Code.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) && (!k.IsDistributed || newOrder.Kegs.Contains(k))).ToList();
+        }
+    }
+}

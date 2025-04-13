@@ -1,46 +1,63 @@
 using BrewLogix.Models;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace BrewLogix.Services
 {
     public class KegService
     {
-        private readonly List<Keg> _kegs;
-        private readonly List<Batch> _batches;
+        private readonly AppDbContext _context;
 
-        public KegService(BatchService batchService)
+        public KegService(AppDbContext context)
         {
-            _batches = batchService.GetAllBatches().ToList();
-            _kegs = new List<Keg>
-            {
-                new Keg { Id = 1, Code = "KEG 001", Size = "5", IsDistributed = true, FilledAt = DateTime.Now, Batch = _batches[0]},
-                new Keg { Id = 2, Code = "KEG 002", Size = "10", IsDistributed = true, FilledAt = DateTime.Now, Batch = _batches[1] },
-                new Keg { Id = 3, Code = "KEG 003", Size = "10", IsDistributed = false, FilledAt = DateTime.Now, Batch = _batches[1] }
-            };
+            _context = context;
         }
 
-        public IEnumerable<Keg> GetAllKegs() => _kegs;
+        public IEnumerable<Keg> GetAllKegs()
+        {
+            return _context.Kegs
+                .Include(k => k.Batch)
+                .ToList();
+        }
 
-        public Keg GetKegById(int id) => _kegs.FirstOrDefault(k => k.Id == id);
+        public Keg? GetKegById(int id)
+        {
+            return _context.Kegs
+                .Include(k => k.Batch)
+                .FirstOrDefault(k => k.Id == id);
+        }
 
         public void AddKeg(Keg keg)
         {
-            keg.Id = _kegs.Max(k => k.Id) + 1;
-            _kegs.Add(keg);
+            keg.FilledAt = keg.FilledAt.ToUniversalTime(); // PostgreSQL wymaga UTC
+            _context.Kegs.Add(keg);
+            _context.SaveChanges();
         }
 
         public void UpdateKeg(Keg keg)
         {
-            var index = _kegs.FindIndex(k => k.Id == keg.Id);
-            if (index != -1)
+            var existingKeg = _context.Kegs.Find(keg.Id);
+            if (existingKeg != null)
             {
-                keg.Batch = _batches.Find(b => b.Id == keg.BatchId);
-                _kegs[index] = keg;
+                existingKeg.Code = keg.Code;
+                existingKeg.Size = keg.Size;
+                existingKeg.IsDistributed = keg.IsDistributed;
+                existingKeg.FilledAt = keg.FilledAt.ToUniversalTime();
+                existingKeg.BatchId = keg.BatchId;
+
+                _context.SaveChanges();
             }
         }
 
-        public void DeleteKeg(Keg keg)
+        public void DeleteKeg(int id)
         {
-            _kegs.Remove(keg);
+            var keg = _context.Kegs.Find(id);
+            if (keg != null)
+            {
+                _context.Kegs.Remove(keg);
+                _context.SaveChanges();
+            }
         }
     }
 }

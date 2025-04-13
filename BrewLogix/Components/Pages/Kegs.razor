@@ -161,7 +161,7 @@ else
 
     private void DeleteKeg(Keg keg)
     {
-        KegService.DeleteKeg(keg);
+        KegService.DeleteKeg(keg.Id);
         kegs = KegService.GetAllKegs().ToList(); 
     }
 

@@ -1,4 +1,5 @@
 using BrewLogix.Models;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -6,85 +7,70 @@ namespace BrewLogix.Services
 {
     public class RecipeService
     {
-        private readonly List<Recipe> _recipes;
-        private readonly IngredientService _ingredientService;
+        private readonly AppDbContext _context;
 
-        public RecipeService(IngredientService ingredientService)
+        public RecipeService(AppDbContext context)
         {
-            _ingredientService = ingredientService;
-            var ingredients = _ingredientService.GetAllIngredients().ToList();
-
-            _recipes = new List<Recipe>
-            {
-                new Recipe
-                {
-                    Id = 1,
-                    Name = "Pale Ale",
-                    Style = "Ale",
-                    Description = "A refreshing pale ale with a balanced malt and hop profile.",
-                    Ingredients = new List<RecipeIngredient>
-                    {
-                        new RecipeIngredient { Ingredient = ingredients[0], Quantity = 3 },
-                        new RecipeIngredient { Ingredient = ingredients[1], Quantity = 50 }
-                    }
-                },
-                new Recipe
-                {
-                    Id = 2,
-                    Name = "IPA",
-                    Style = "India Pale Ale",
-                    Description = "A hoppy IPA with a strong bitter finish.",
-                    Ingredients = new List<RecipeIngredient>
-                    {
-                        new RecipeIngredient { Ingredient = ingredients[0], Quantity = 5 }, 
-                        new RecipeIngredient { Ingredient = ingredients[1], Quantity = 100 } 
-                    }
-                }
-            };
+            _context = context;
         }
 
-        public IEnumerable<Recipe> GetAllRecipes() => _recipes;
+        public IEnumerable<Recipe> GetAllRecipes()
+        {
+            return _context.Recipes
+                .Include(r => r.Ingredients)
+                    .ThenInclude(ri => ri.Ingredient)
+                .ToList();
+        }
 
-        public Recipe GetRecipeById(int id) => _recipes.FirstOrDefault(r => r.Id == id);
+        public Recipe GetRecipeById(int id)
+        {
+            return _context.Recipes
+                .Include(r => r.Ingredients)
+                    .ThenInclude(ri => ri.Ingredient)
+                .FirstOrDefault(r => r.Id == id);
+        }
 
         public void AddRecipe(Recipe recipe)
         {
-            recipe.Id = _recipes.Max(r => r.Id) + 1;
-            _recipes.Add(recipe);
+            _context.Recipes.Add(recipe);
+            _context.SaveChanges();
         }
 
         public void UpdateRecipe(Recipe recipe)
         {
-            var index = _recipes.FindIndex(r => r.Id == recipe.Id);
-            if (index != -1)
-            {
-                _recipes[index] = recipe;
-            }
+            var tracked = _context.Recipes.Local.FirstOrDefault(r => r.Id == recipe.Id);
+            if (tracked != null)
+                _context.Entry(tracked).State = EntityState.Detached;
+
+            _context.Recipes.Update(recipe);
+            _context.SaveChanges();
         }
 
         public void DeleteRecipe(Recipe recipe)
         {
-            _recipes.Remove(recipe);
+            _context.Recipes.Remove(recipe);
+            _context.SaveChanges();
         }
 
-        public void AddIngredientToRecipe(Recipe recipe, RecipeIngredient newIngredient, List<Ingredient> ingredients)
+        public void AddIngredientToRecipe(Recipe recipe, RecipeIngredient newIngredient)
         {
-            var ingredient = ingredients.FirstOrDefault(i => i.Id == newIngredient.IngredientId);
+            recipe.Ingredients ??= new List<RecipeIngredient>();
+
+            var ingredient = _context.Ingredients.FirstOrDefault(i => i.Id == newIngredient.IngredientId);
             if (ingredient != null)
             {
-                recipe.Ingredients.Add(new RecipeIngredient
-                {
-                    Id = recipe.Ingredients.Count + 1,
-                    Ingredient = ingredient,
-                    IngredientId = ingredient.Id,
-                    Quantity = newIngredient.Quantity
-                });
+                newIngredient.Ingredient = ingredient;
+                recipe.Ingredients.Add(newIngredient);
+
+                _context.Recipes.Update(recipe);
+                _context.SaveChanges();
             }
         }
 
         public void RemoveIngredientFromRecipe(Recipe recipe, RecipeIngredient ingredientToRemove)
         {
             recipe.Ingredients.Remove(ingredientToRemove);
+            _context.SaveChanges();
         }
     }
 }

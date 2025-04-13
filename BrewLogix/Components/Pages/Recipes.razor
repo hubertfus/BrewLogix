@@ -152,6 +152,7 @@
 
 @code {
     [Inject] private IngredientService IngredientService { get; set; }
+
     private string recipeSearchTerm = string.Empty;
     private bool isRecipeFormOpen = false;
     private Recipe selectedRecipe;
@@ -160,7 +161,7 @@
     private List<Recipe> recipes = new List<Recipe>();
     private List<Ingredient> ingredients;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         ingredients = IngredientService.GetAllIngredients().ToList();
         recipes = RecipeService.GetAllRecipes().ToList();
@@ -191,22 +192,17 @@
     private void AddRecipeIngredient()
     {
         if (newRecipe.Ingredients == null)
-        {
             newRecipe.Ingredients = new List<RecipeIngredient>();
-        }
 
         var ingredient = ingredients.FirstOrDefault(i => i.Id == newRecipeIngredient.IngredientId);
         if (ingredient != null)
         {
-            var copiedIngredient = new RecipeIngredient
+            newRecipe.Ingredients.Add(new RecipeIngredient
             {
-                Id = newRecipe.Ingredients.Count + 1,
-                Ingredient = ingredient,
                 IngredientId = ingredient.Id,
+                Ingredient = ingredient,
                 Quantity = newRecipeIngredient.Quantity
-            };
-
-            newRecipe.Ingredients.Add(copiedIngredient);  
+            });
         }
 
         newRecipeIngredient = new RecipeIngredient();
@@ -224,14 +220,16 @@
             selectedRecipe.Name = newRecipe.Name;
             selectedRecipe.Style = newRecipe.Style;
             selectedRecipe.Description = newRecipe.Description;
-            selectedRecipe.Ingredients = new List<RecipeIngredient>(newRecipe.Ingredients);
+            selectedRecipe.Ingredients = newRecipe.Ingredients;
+
+            RecipeService.UpdateRecipe(selectedRecipe);
         }
         else
         {
-            newRecipe.Id = recipes.Count + 1;
-            recipes.Add(newRecipe);
+            RecipeService.AddRecipe(newRecipe);
         }
 
+        recipes = RecipeService.GetAllRecipes().ToList();
         CancelRecipe();
     }
 
@@ -247,16 +245,17 @@
             Ingredients = recipe.Ingredients.Select(i => new RecipeIngredient
             {
                 Id = i.Id,
-                Ingredient = i.Ingredient,
                 IngredientId = i.IngredientId,
+                Ingredient = i.Ingredient,
                 Quantity = i.Quantity
-            }).ToList() 
+            }).ToList()
         };
         isRecipeFormOpen = true;
     }
 
     private void DeleteRecipe(Recipe recipe)
     {
-        recipes.Remove(recipe);
+        RecipeService.DeleteRecipe(recipe);
+        recipes = RecipeService.GetAllRecipes().ToList();
     }
 }

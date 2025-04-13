@@ -1,50 +1,56 @@
 using BrewLogix.Models;
+using BrewLogix.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace BrewLogix.Services;
 
 public class StockEntriesService
 {
-    private readonly List<StockEntry> _stockEntries;
-    private readonly IngredientService _ingredientService;
+    private readonly AppDbContext _context;
 
-    public StockEntriesService(IngredientService ingredientService)
+    public StockEntriesService(AppDbContext context)
     {
-        _ingredientService = ingredientService;
-        var ingredients = _ingredientService.GetAllIngredients().ToList();
-        _stockEntries = new List<StockEntry>
-        {
-            new StockEntry { Id = 1, Ingredient = ingredients[0], Quantity = 2, DeliveryDate = DateTime.Now, ExpiryDate = DateTime.Now.AddMonths(6) },
-            new StockEntry { Id = 2, Ingredient = ingredients[1], Quantity = 200, DeliveryDate = DateTime.Now, ExpiryDate = DateTime.Now.AddMonths(3) },
-            new StockEntry { Id = 3, Ingredient = ingredients[0], Quantity = 2137, DeliveryDate = DateTime.Now, ExpiryDate = DateTime.Now.AddMonths(3) },
-            new StockEntry { Id = 4, Ingredient = ingredients[2], Quantity = 400, DeliveryDate = DateTime.Now.AddDays(-1), ExpiryDate = DateTime.Now.AddMonths(6) },
-            new StockEntry { Id = 5, Ingredient = ingredients[3], Quantity = 100, DeliveryDate = DateTime.Now.AddDays(-2), ExpiryDate = DateTime.Now.AddMonths(5) }
-        };
+        _context = context;
     }
-    
-    public IEnumerable<StockEntry> GetAllStockEntries() => _stockEntries;
 
-    
+    public IEnumerable<StockEntry> GetAllStockEntries()
+    {
+        return _context.StockEntries.Include(se => se.Ingredient).ToList();
+    }
+
     public IEnumerable<StockEntry> GetStockEntriesForIngredient(int ingredientId)
     {
-        return _stockEntries.Where(se => se.Ingredient.Id == ingredientId);
+        return _context.StockEntries
+            .Include(se => se.Ingredient)
+            .Where(se => se.IngredientId == ingredientId)
+            .ToList();
     }
-    
+
     public void AddStockEntry(StockEntry stockEntry)
     {
-        stockEntry.Id = _stockEntries.Max(se => se.Id) + 1;
-        _stockEntries.Add(stockEntry);
+        _context.StockEntries.Add(stockEntry);
+        _context.SaveChanges();
     }
 
     public void UpdateStockEntry(StockEntry stockEntry)
     {
-        var index = _stockEntries.FindIndex(se => se.Id == stockEntry.Id);
-        _stockEntries[index] = stockEntry;
+        var trackedEntity = _context.StockEntries.Local.FirstOrDefault(e => e.Id == stockEntry.Id);
+        if (trackedEntity != null)
+        {
+            _context.Entry(trackedEntity).State = EntityState.Detached;
+        }
+        _context.StockEntries.Update(stockEntry);   
+        _context.SaveChanges();
     }
-    
-    public StockEntry GetStockEntry(int id) => _stockEntries.FirstOrDefault(se => se.Id == id);
+
+    public StockEntry GetStockEntry(int id)
+    {
+        return _context.StockEntries.Include(se => se.Ingredient).FirstOrDefault(se => se.Id == id);
+    }
 
     public void DeleteStockEntry(StockEntry stockEntry)
     {
-        _stockEntries.Remove(stockEntry);
+        _context.StockEntries.Remove(stockEntry);
+        _context.SaveChanges();
     }
 }

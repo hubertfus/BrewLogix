@@ -10,16 +10,16 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 // builder.Services.AddSingleton<ClientService>();
-builder.Services.AddSingleton<IngredientService>();
-builder.Services.AddSingleton<StockEntriesService>();
+builder.Services.AddScoped<IngredientService>();
+builder.Services.AddScoped<StockEntriesService>();
 builder.Services.AddScoped<RecipeService>();
 builder.Services.AddScoped<BatchService>();
 builder.Services.AddScoped<KegService>();
 builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<ClientService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddScoped<ClientService>();
 
 
 var app = builder.Build();

@@ -208,6 +208,8 @@
     private void HandleAddOrUpdateStockEntry()
     {
         newStockEntry.Ingredient = ingredients.Find(ingredient => ingredient.Id == newStockEntry.IngredientId);
+        newStockEntry.DeliveryDate = DateTime.SpecifyKind(newStockEntry.DeliveryDate, DateTimeKind.Utc);
+
         if (newStockEntry.Id == 0)
         {
             StockEntriesService.AddStockEntry(newStockEntry);

@@ -1,4 +1,5 @@
 using BrewLogix.Models;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -6,58 +7,60 @@ namespace BrewLogix.Services
 {
     public class OrderService
     {
-        private readonly List<Order> _orders;
+        private readonly AppDbContext _context;
 
-        public OrderService()
+        public OrderService(AppDbContext context)
         {
-            _orders = new List<Order>
-            {
-                new Order 
-                { 
-                    Id = 1, 
-                    ClientId = 1, 
-                    OrderedAt = DateTime.Now.AddDays(-5), 
-                    Status = "Pending",
-                    Kegs = new List<Keg> { new Keg { Id = 1, Code = "KEG 001", Size = "5", IsDistributed = false } }
-                },
-                new Order 
-                { 
-                    Id = 2, 
-                    ClientId = 2, 
-                    OrderedAt = DateTime.Now.AddDays(-3), 
-                    Status = "Shipped", 
-                    Kegs = new List<Keg> { new Keg { Id = 2, Code = "KEG 002", Size = "10", IsDistributed = false } }
-                }
-            };
+            _context = context;
         }
 
-        // Get all orders
-        public IEnumerable<Order> GetAllOrders() => _orders;
+        public IEnumerable<Order> GetAllOrders()
+        {
+            return _context.Orders
+                .Include(o => o.Kegs)
+                .ToList();
+        }
 
-        // Get order by id
-        public Order GetOrderById(int id) => _orders.FirstOrDefault(o => o.Id == id);
+        public Order? GetOrderById(int id)
+        {
+            return _context.Orders
+                .Include(o => o.Kegs)
+                .FirstOrDefault(o => o.Id == id);
+        }
 
-        // Add a new order
         public void AddOrder(Order order)
         {
-            order.Id = _orders.Max(o => o.Id) + 1;
-            _orders.Add(order);
+            order.OrderedAt = order.OrderedAt.ToUniversalTime(); 
+            _context.Orders.Add(order);
+            _context.SaveChanges();
         }
 
-        // Update an existing order
         public void UpdateOrder(Order order)
         {
-            var index = _orders.FindIndex(o => o.Id == order.Id);
-            if (index != -1)
+            var existing = _context.Orders
+                .Include(o => o.Kegs)
+                .FirstOrDefault(o => o.Id == order.Id);
+
+            if (existing != null)
             {
-                _orders[index] = order;
+                existing.ClientId = order.ClientId;
+                existing.OrderedAt = order.OrderedAt.ToUniversalTime();
+                existing.Status = order.Status;
+
+                existing.Kegs = order.Kegs;
+
+                _context.SaveChanges();
             }
         }
 
-        // Delete an order
-        public void DeleteOrder(Order order)
+        public void DeleteOrder(int orderId)
         {
-            _orders.Remove(order);
+            var order = _context.Orders.Find(orderId);
+            if (order != null)
+            {
+                _context.Orders.Remove(order);
+                _context.SaveChanges();
+            }
         }
     }
 }

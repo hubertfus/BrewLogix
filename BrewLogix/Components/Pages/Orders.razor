@@ -44,21 +44,29 @@
                     <ul class="list-group mt-2">
                         @foreach (var keg in filteredKegs)
                         {
+                            bool isSelected = selectedKegsTemp.Any(sk => sk.Id == keg.Id);
+
                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                @keg.Code (@keg.Size)L
-                                <div class="btn btn-sm btn-secondary"
-                                     @onclick="() => AddKegToOrder(keg)">
+                                <div>
+                                    @keg.Code (@keg.Size)L
+                                    @if (keg.IsDistributed || isSelected)
+                                    {
+                                        <span class="badge bg-danger ms-2" title="This keg is assigned to another order">Assigned</span>
+                                    }
+                                </div>
+                                <div class="btn btn-sm btn-secondary" @onclick="() => AddKegToOrder(keg)">
                                     Add
                                 </div>
                             </li>
                         }
                     </ul>
+
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">Selected Kegs</label>
                     <ul class="list-group">
-                        @foreach (var selectedKeg in newOrder.Kegs)
+                        @foreach (var selectedKeg in selectedKegsTemp)
                         {
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 @selectedKeg.Code (@selectedKeg.Size)L
@@ -114,6 +122,7 @@ else
     private List<Client> clients = new();
     private List<Keg> kegs = new();
     private List<Keg> filteredKegs = new();
+    private List<Keg> selectedKegsTemp = new();
     private string searchTerm = string.Empty;
     private Order newOrder = new();
     private bool isFormOpen = false;
@@ -123,16 +132,14 @@ else
         orders = OrderService.GetAllOrders().ToList();
         clients = ClientService.GetAllClients().ToList();
         kegs = KegService.GetAllKegs().ToList();
-        filteredKegs = kegs; // Initially show all kegs
+        filteredKegs = kegs;
     }
 
     private void OpenOrderForm()
     {
-        newOrder = new Order
-        {
-            Kegs = new List<Keg>() // Initialize with an empty list to prevent pre-selection
-        };
-        SearchKegs();  // Refresh the keg list
+        newOrder = new Order { Kegs = new List<Keg>() };
+        selectedKegsTemp = new List<Keg>();
+        SearchKegs();
         isFormOpen = true;
     }
 
@@ -140,20 +147,23 @@ else
     {
         isFormOpen = false;
         newOrder = new Order();
+        selectedKegsTemp.Clear();
     }
 
     private void HandleAddOrder()
     {
         try
         {
-            // Mark kegs as distributed only when the order is saved
-            foreach (var keg in newOrder.Kegs)
+            newOrder.Kegs = selectedKegsTemp;
+
+            foreach (var keg in kegs)
             {
-                keg.IsDistributed = true;  // Mark the kegs as assigned
+                keg.IsDistributed = newOrder.Kegs.Any(k => k.Id == keg.Id);
             }
 
             if (newOrder.Id == 0)
             {
+                newOrder.OrderedAt = DateTime.Now;
                 OrderService.AddOrder(newOrder);
             }
             else
@@ -162,11 +172,11 @@ else
             }
 
             isFormOpen = false;
-            orders = OrderService.GetAllOrders().ToList(); // Refresh the orders list
+            orders = OrderService.GetAllOrders().ToList();
         }
         catch (Exception ex)
         {
-            // Handle error (log or display message)
+            // log
         }
     }
 
@@ -177,9 +187,28 @@ else
             Id = order.Id,
             ClientId = order.ClientId,
             OrderedAt = order.OrderedAt,
-            Status = order.Status,
-            Kegs = order.Kegs // Load selected kegs from the existing order
+            Status = order.Status
         };
+
+        selectedKegsTemp = order.Kegs.Select(k => new Keg
+        {
+            Id = k.Id,
+            Code = k.Code,
+            Size = k.Size,
+            IsDistributed = k.IsDistributed,
+            BatchId = k.BatchId
+        }).ToList();
+
+        // Zaktualizuj IsDistributed - uwzględniaj przypisanie w innych zamówieniach
+        foreach (var keg in kegs)
+        {
+            keg.IsDistributed = orders
+                .Where(o => o.Id != order.Id)
+                .SelectMany(o => o.Kegs)
+                .Any(k => k.Id == keg.Id);
+        }
+
+        SearchKegs();
         isFormOpen = true;
     }
 
@@ -187,39 +216,52 @@ else
     {
         try
         {
-            OrderService.DeleteOrder(order);
-            orders = OrderService.GetAllOrders().ToList(); // Refresh the orders list
+            OrderService.DeleteOrder(order.Id);
+            orders = OrderService.GetAllOrders().ToList();
         }
         catch (Exception ex)
         {
-            // Handle error (log or display message)
+            // log
         }
     }
 
     private void AddKegToOrder(Keg keg)
     {
-        // Temporarily add the keg to the order list, but don't save to database yet
-        if (!newOrder.Kegs.Contains(keg))
+        if (!selectedKegsTemp.Any(k => k.Id == keg.Id))
         {
-            newOrder.Kegs.Add(keg);
+            selectedKegsTemp.Add(keg);
+            SearchKegs();
         }
     }
 
     private void RemoveKegFromOrder(Keg keg)
     {
-        // Temporarily remove the keg from the order list, but don't save to database yet
-        newOrder.Kegs.Remove(keg);
+        selectedKegsTemp.RemoveAll(k => k.Id == keg.Id);
+
+        var originalKeg = kegs.FirstOrDefault(k => k.Id == keg.Id);
+        if (originalKeg != null)
+        {
+            originalKeg.IsDistributed = false;
+        }
+
+        SearchKegs();
     }
 
     private void SearchKegs()
     {
         if (string.IsNullOrEmpty(searchTerm))
         {
-            filteredKegs = kegs.Where(k => !k.IsDistributed || newOrder.Kegs.Contains(k)).ToList(); // Include kegs in the order
+            filteredKegs = kegs
+                .Where(k => !k.IsDistributed || selectedKegsTemp.Any(sk => sk.Id == k.Id))
+                .ToList();
         }
         else
         {
-            filteredKegs = kegs.Where(k => k.Code.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) && (!k.IsDistributed || newOrder.Kegs.Contains(k))).ToList();
+            filteredKegs = kegs
+                .Where(k =>
+                    k.Code.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+                    && (!k.IsDistributed || selectedKegsTemp.Any(sk => sk.Id == k.Id)))
+                .ToList();
         }
     }
 }

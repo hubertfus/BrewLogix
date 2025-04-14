@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BrewLogix.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250412212326_InitialCreate")]
+    [Migration("20250413164521_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -35,12 +35,13 @@ namespace BrewLogix.Migrations
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("EndDate")
+                    b.Property<DateTime>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("RecipeId")
@@ -51,7 +52,8 @@ namespace BrewLogix.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -73,7 +75,8 @@ namespace BrewLogix.Migrations
 
                     b.Property<string>("Address")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("ContactEmail")
                         .IsRequired()
@@ -84,7 +87,8 @@ namespace BrewLogix.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -107,15 +111,18 @@ namespace BrewLogix.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Type")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Unit")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -138,7 +145,8 @@ namespace BrewLogix.Migrations
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -154,7 +162,8 @@ namespace BrewLogix.Migrations
 
                     b.Property<string>("Size")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -187,7 +196,8 @@ namespace BrewLogix.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -211,15 +221,18 @@ namespace BrewLogix.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Style")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -281,7 +294,7 @@ namespace BrewLogix.Migrations
                     b.Property<DateTime>("DeliveryDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("ExpiryDate")
+                    b.Property<DateTime>("ExpiryDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("IngredientId")

@@ -135,7 +135,10 @@
     private List<StockEntry> stockEntries = new();
 
     private Ingredient newIngredient = new();
-    private StockEntry newStockEntry = new();
+    private StockEntry newStockEntry = new StockEntry
+    {
+        DeliveryDate = DateTime.UtcNow
+    };
 
     private bool isIngredientFormOpen = false;
     private bool isStockEntryFormOpen = false;

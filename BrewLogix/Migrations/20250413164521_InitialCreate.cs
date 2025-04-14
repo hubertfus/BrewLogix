@@ -18,9 +18,9 @@ namespace BrewLogix.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     ContactEmail = table.Column<string>(type: "text", nullable: false),
-                    Address = table.Column<string>(type: "text", nullable: false),
+                    Address = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -35,9 +35,9 @@ namespace BrewLogix.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Type = table.Column<string>(type: "text", nullable: false),
-                    Unit = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Unit = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -52,9 +52,9 @@ namespace BrewLogix.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Style = table.Column<string>(type: "text", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: true),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Style = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -71,7 +71,7 @@ namespace BrewLogix.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ClientId = table.Column<int>(type: "integer", nullable: false),
                     OrderedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Status = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -92,11 +92,11 @@ namespace BrewLogix.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Code = table.Column<string>(type: "text", nullable: false),
+                    Code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     RecipeId = table.Column<int>(type: "integer", nullable: false),
                     StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Status = table.Column<string>(type: "text", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Status = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -147,9 +147,9 @@ namespace BrewLogix.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Code = table.Column<string>(type: "text", nullable: false),
+                    Code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     BatchId = table.Column<int>(type: "integer", nullable: false),
-                    Size = table.Column<string>(type: "text", nullable: false),
+                    Size = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     IsDistributed = table.Column<bool>(type: "boolean", nullable: false),
                     FilledAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     OrderId = table.Column<int>(type: "integer", nullable: true),
@@ -181,7 +181,7 @@ namespace BrewLogix.Migrations
                     IngredientId = table.Column<int>(type: "integer", nullable: false),
                     Quantity = table.Column<decimal>(type: "numeric", nullable: false),
                     DeliveryDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ExpiryDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    ExpiryDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     BatchId = table.Column<int>(type: "integer", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)

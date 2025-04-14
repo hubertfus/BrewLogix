@@ -1,34 +1,54 @@
-namespace BrewLogix.Services;
-
-using Microsoft.EntityFrameworkCore;
-using BrewLogix.Models;
-
-public class AppDbContext : DbContext
+namespace BrewLogix.Services
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+    using Microsoft.EntityFrameworkCore;
+    using BrewLogix.Models;
 
-    public DbSet<Batch> Batches { get; set; }
-    public DbSet<Client> Clients { get; set; }
-    public DbSet<Ingredient> Ingredients { get; set; }
-    public DbSet<Keg> Kegs { get; set; }
-    public DbSet<Order> Orders { get; set; }
-    public DbSet<Recipe> Recipes { get; set; }
-    public DbSet<RecipeIngredient> RecipeIngredients { get; set; }
-    public DbSet<StockEntry> StockEntries { get; set; }
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    public class AppDbContext : DbContext
     {
-        base.OnModelCreating(modelBuilder);
+        private readonly string _connectionString;
 
-        modelBuilder.Entity<RecipeIngredient>()
-            .HasOne(ri => ri.Recipe)
-            .WithMany(r => r.Ingredients)
-            .HasForeignKey(ri => ri.RecipeId);
+        // Konstruktor DbContext
+        public AppDbContext(DbContextOptions<AppDbContext> options, string connectionString = null) : base(options)
+        {
+            // Ustawienie ConnectionString na podstawie przekazanej wartości (lub domyślnej)
+            _connectionString = connectionString;
+        }
 
-        modelBuilder.Entity<RecipeIngredient>()
-            .HasOne(ri => ri.Ingredient)
-            .WithMany(i => i.UsedInRecipes)
-            .HasForeignKey(ri => ri.IngredientId);
+        public DbSet<Batch> Batches { get; set; }
+        public DbSet<Client> Clients { get; set; }
+        public DbSet<Ingredient> Ingredients { get; set; }
+        public DbSet<Keg> Kegs { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<Recipe> Recipes { get; set; }
+        public DbSet<RecipeIngredient> RecipeIngredients { get; set; }
+        public DbSet<StockEntry> StockEntries { get; set; }
+
+        // Zmiana konfiguracji bazy danych w zależności od ConnectionString
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!string.IsNullOrWhiteSpace(_connectionString))
+            {
+                optionsBuilder.UseNpgsql(_connectionString); // Można dostosować do innego provider'a bazy danych
+            }
+            else
+            {
+                base.OnConfiguring(optionsBuilder); // Domyślna konfiguracja jeśli nie ma dynamicznego połączenia
+            }
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<RecipeIngredient>()
+                .HasOne(ri => ri.Recipe)
+                .WithMany(r => r.Ingredients)
+                .HasForeignKey(ri => ri.RecipeId);
+
+            modelBuilder.Entity<RecipeIngredient>()
+                .HasOne(ri => ri.Ingredient)
+                .WithMany(i => i.UsedInRecipes)
+                .HasForeignKey(ri => ri.IngredientId);
+        }
     }
 }
-

@@ -133,7 +133,7 @@
                         <div>
                             <h5 class="mb-2">@batch.Code</h5>
                             <div class="text-muted">
-                                <div><i class="bi bi-calendar me-2"></i>@batch.StartDate.ToShortDateString() - @(batch.EndDate?.ToShortDateString() ?? "Ongoing")</div>
+                                <div><i class="bi bi-calendar me-2"></i>@batch.StartDate.ToShortDateString() - @(batch.EndDate.ToShortDateString() ?? "Ongoing")</div>
                                 <div><i class="bi bi-gear me-2"></i>@batch.Recipe.Name</div>
                                 <div><i class="bi bi-gear me-2"></i>@batch.Status</div>
                             </div>
@@ -172,7 +172,8 @@ else
     {
         newBatch = new Batch
         {
-            StartDate = DateTime.Today
+            StartDate = DateTime.Today,
+            EndDate = DateTime.UtcNow
         };
         isBatchFormOpen = true;
     }
@@ -189,7 +190,7 @@ else
     {
         errorMessage = null;
         newBatch.StartDate = DateTime.SpecifyKind(newBatch.StartDate, DateTimeKind.Utc);
-        newBatch.EndDate = DateTime.SpecifyKind(newBatch.EndDate?? DateTime.Now, DateTimeKind.Utc);
+        newBatch.EndDate = DateTime.SpecifyKind(newBatch.EndDate, DateTimeKind.Utc);
         if (newBatch.Id == 0)
         {
             var selectedRecipe = recipes.FirstOrDefault(r => r.Id == newBatch.RecipeId);

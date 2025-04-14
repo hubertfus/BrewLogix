@@ -23,16 +23,15 @@ namespace BrewLogix.Services
         public DbSet<RecipeIngredient> RecipeIngredients { get; set; }
         public DbSet<StockEntry> StockEntries { get; set; }
 
-        // Zmiana konfiguracji bazy danych w zależności od ConnectionString
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!string.IsNullOrWhiteSpace(_connectionString))
             {
-                optionsBuilder.UseNpgsql(_connectionString); // Można dostosować do innego provider'a bazy danych
+                optionsBuilder.UseNpgsql(_connectionString); 
             }
             else
             {
-                base.OnConfiguring(optionsBuilder); // Domyślna konfiguracja jeśli nie ma dynamicznego połączenia
+                base.OnConfiguring(optionsBuilder); 
             }
         }
 

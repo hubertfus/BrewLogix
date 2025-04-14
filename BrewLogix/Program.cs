@@ -1,7 +1,9 @@
 using BrewLogix;
 using BrewLogix.Components;
+using BrewLogix.dbhelpers;
 using BrewLogix.Models;
 using BrewLogix.Services;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,7 +12,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// builder.Services.AddSingleton<ClientService>();
 builder.Services.AddScoped<IngredientService>();
 builder.Services.AddScoped<StockEntriesService>();
 builder.Services.AddScoped<RecipeService>();
@@ -18,10 +19,16 @@ builder.Services.AddScoped<BatchService>();
 builder.Services.AddScoped<KegService>();
 builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<ClientService>();
+builder.Services.AddScoped<IDbContextProvider, DbContextProvider>();
+builder.Services.AddScoped<ProtectedSessionStorage>();
 
-builder.Services.AddDbContext<AppDbContext>(options =>
+
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
 
 var app = builder.Build();
 
@@ -34,8 +41,6 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-
 app.UseAntiforgery();
 
 app.MapStaticAssets();

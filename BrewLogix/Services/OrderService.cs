@@ -2,20 +2,22 @@ using BrewLogix.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
+using BrewLogix.dbhelpers;
 
 namespace BrewLogix.Services
 {
     public class OrderService
     {
-        private readonly AppDbContext _context;
+        private readonly IDbContextProvider _dbContextProvider;
 
-        public OrderService(AppDbContext context)
+        public OrderService(IDbContextProvider dbContextProvider)
         {
-            _context = context;
+            _dbContextProvider = dbContextProvider;
         }
 
         public IEnumerable<Order> GetAllOrders()
         {
+            using var _context = _dbContextProvider.GetDbContext();
             return _context.Orders
                 .Include(o => o.Kegs)
                 .ToList();
@@ -23,6 +25,7 @@ namespace BrewLogix.Services
 
         public Order? GetOrderById(int id)
         {
+            using var _context = _dbContextProvider.GetDbContext();
             return _context.Orders
                 .Include(o => o.Kegs)
                 .FirstOrDefault(o => o.Id == id);
@@ -30,13 +33,15 @@ namespace BrewLogix.Services
 
         public void AddOrder(Order order)
         {
-            order.OrderedAt = order.OrderedAt.ToUniversalTime(); 
+            using var _context = _dbContextProvider.GetDbContext();
+            order.OrderedAt = order.OrderedAt.ToUniversalTime();
             _context.Orders.Add(order);
             _context.SaveChanges();
         }
 
         public void UpdateOrder(Order order)
         {
+            using var _context = _dbContextProvider.GetDbContext();
             var existing = _context.Orders
                 .Include(o => o.Kegs)
                 .FirstOrDefault(o => o.Id == order.Id);
@@ -55,6 +60,7 @@ namespace BrewLogix.Services
 
         public void DeleteOrder(int orderId)
         {
+            using var _context = _dbContextProvider.GetDbContext();
             var order = _context.Orders.Find(orderId);
             if (order != null)
             {

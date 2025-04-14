@@ -1,0 +1,80 @@
+@page "/database-switcher"
+@using BrewLogix.dbhelpers
+@using BrewLogix.Models
+@using BrewLogix.Services
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextProvider DbContextProvider
+@inject IngredientService IngredientService
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    <div class="card shadow rounded">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Select Database</h4>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="dbSelect" class="form-label">Available Databases:</label>
+                <select id="dbSelect" class="form-select" @bind="SelectedDatabase">
+                    <option value="DefaultConnection">Default Database</option>
+                    <option value="TestConnection">Test Database</option>
+                    <option value="BackupConnection">Backup Database</option>
+                </select>
+            </div>
+
+            <h5 class="mt-4">Ingredient List</h5>
+            @if (ingredients.Count > 0)
+            {
+                <ul class="list-group">
+                    @foreach (var ingredient in ingredients)
+                    {
+                        <li class="list-group-item">@ingredient.Name</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <div class="alert alert-info mt-3">No ingredients to display.</div>
+            }
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private List<Ingredient> ingredients = new();
+    private string selectedDatabase = "DefaultConnection";
+    private string currentDatabase = "DefaultConnection";
+
+    protected override void OnInitialized()
+    {
+        selectedDatabase = DBName.Name;
+    }
+
+    private string SelectedDatabase
+    {
+        get => selectedDatabase;
+        set
+        {
+            if (selectedDatabase != value)
+            {
+                selectedDatabase = value;
+                ChangeDatabase(selectedDatabase);
+                LoadIngredients();  
+            }
+        }
+    }
+
+    private void ChangeDatabase(string dbName)
+    {
+        DBName.Name = dbName;
+        DbContextProvider.SetConnection();
+    }
+
+    private async Task LoadIngredients()
+    {
+        var dbContext = DbContextProvider.GetDbContext(); 
+        ingredients = await dbContext.Ingredients.ToListAsync(); 
+    }
+}

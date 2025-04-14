@@ -2,20 +2,22 @@ using BrewLogix.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
+using BrewLogix.dbhelpers;
 
 namespace BrewLogix.Services
 {
     public class RecipeService
     {
-        private readonly AppDbContext _context;
+        private readonly IDbContextProvider _dbContextProvider;
 
-        public RecipeService(AppDbContext context)
+        public RecipeService(IDbContextProvider dbContextProvider)
         {
-            _context = context;
+            _dbContextProvider = dbContextProvider;
         }
 
         public IEnumerable<Recipe> GetAllRecipes()
         {
+            using var _context = _dbContextProvider.GetDbContext();
             return _context.Recipes
                 .Include(r => r.Ingredients)
                     .ThenInclude(ri => ri.Ingredient)
@@ -24,6 +26,7 @@ namespace BrewLogix.Services
 
         public Recipe GetRecipeById(int id)
         {
+            using var _context = _dbContextProvider.GetDbContext();
             return _context.Recipes
                 .Include(r => r.Ingredients)
                     .ThenInclude(ri => ri.Ingredient)
@@ -32,12 +35,15 @@ namespace BrewLogix.Services
 
         public void AddRecipe(Recipe recipe)
         {
+            using var _context = _dbContextProvider.GetDbContext();
             _context.Recipes.Add(recipe);
             _context.SaveChanges();
         }
 
         public void UpdateRecipe(Recipe recipe)
         {
+            using var _context = _dbContextProvider.GetDbContext();
+
             var tracked = _context.Recipes.Local.FirstOrDefault(r => r.Id == recipe.Id);
             if (tracked != null)
                 _context.Entry(tracked).State = EntityState.Detached;
@@ -48,12 +54,14 @@ namespace BrewLogix.Services
 
         public void DeleteRecipe(Recipe recipe)
         {
+            using var _context = _dbContextProvider.GetDbContext();
             _context.Recipes.Remove(recipe);
             _context.SaveChanges();
         }
 
         public void AddIngredientToRecipe(Recipe recipe, RecipeIngredient newIngredient)
         {
+            using var _context = _dbContextProvider.GetDbContext();
             recipe.Ingredients ??= new List<RecipeIngredient>();
 
             var ingredient = _context.Ingredients.FirstOrDefault(i => i.Id == newIngredient.IngredientId);
@@ -69,6 +77,7 @@ namespace BrewLogix.Services
 
         public void RemoveIngredientFromRecipe(Recipe recipe, RecipeIngredient ingredientToRemove)
         {
+            using var _context = _dbContextProvider.GetDbContext();
             recipe.Ingredients.Remove(ingredientToRemove);
             _context.SaveChanges();
         }

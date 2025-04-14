@@ -2,20 +2,22 @@ using BrewLogix.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
+using BrewLogix.dbhelpers;
 
 namespace BrewLogix.Services
 {
     public class KegService
     {
-        private readonly AppDbContext _context;
+        private readonly IDbContextProvider _dbContextProvider;
 
-        public KegService(AppDbContext context)
+        public KegService(IDbContextProvider dbContextProvider)
         {
-            _context = context;
+            _dbContextProvider = dbContextProvider;
         }
 
         public IEnumerable<Keg> GetAllKegs()
         {
+            using var _context = _dbContextProvider.GetDbContext();
             return _context.Kegs
                 .Include(k => k.Batch)
                 .ToList();
@@ -23,6 +25,7 @@ namespace BrewLogix.Services
 
         public Keg? GetKegById(int id)
         {
+            using var _context = _dbContextProvider.GetDbContext();
             return _context.Kegs
                 .Include(k => k.Batch)
                 .FirstOrDefault(k => k.Id == id);
@@ -30,13 +33,15 @@ namespace BrewLogix.Services
 
         public void AddKeg(Keg keg)
         {
-            keg.FilledAt = keg.FilledAt.ToUniversalTime(); // PostgreSQL wymaga UTC
+            using var _context = _dbContextProvider.GetDbContext();
+            keg.FilledAt = keg.FilledAt.ToUniversalTime(); 
             _context.Kegs.Add(keg);
             _context.SaveChanges();
         }
 
         public void UpdateKeg(Keg keg)
         {
+            using var _context = _dbContextProvider.GetDbContext();
             var existingKeg = _context.Kegs.Find(keg.Id);
             if (existingKeg != null)
             {
@@ -52,6 +57,7 @@ namespace BrewLogix.Services
 
         public void DeleteKeg(int id)
         {
+            using var _context = _dbContextProvider.GetDbContext();
             var keg = _context.Kegs.Find(id);
             if (keg != null)
             {

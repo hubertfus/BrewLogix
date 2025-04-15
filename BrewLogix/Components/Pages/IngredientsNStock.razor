@@ -18,6 +18,11 @@
     </button>
 </div>
 
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
 @if (isIngredientFormOpen)
 {
     <div class="card mb-4">
@@ -145,6 +150,8 @@
 
     private string ingredientSearchTerm = string.Empty;
     private string stockEntrySearchTerm = string.Empty;
+    
+    private string errorMessage;
 
     protected override void OnInitialized()
     {
@@ -198,9 +205,18 @@
 
     private void DeleteIngredient(Ingredient ingredient)
     {
-        IngredientService.DeleteIngredient(ingredient);
-        ingredients = IngredientService.GetAllIngredients().ToList();
+        try
+        {
+            IngredientService.DeleteIngredient(ingredient);
+            ingredients = IngredientService.GetAllIngredients().ToList();
+            errorMessage = string.Empty;
+        }
+        catch (InvalidOperationException ex)
+        {
+            errorMessage = ex.Message;
+        }
     }
+
 
     private void CancelIngredientEdit()
     {

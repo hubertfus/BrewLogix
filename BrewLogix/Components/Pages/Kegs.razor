@@ -11,6 +11,10 @@
 <button class="btn btn-primary mb-3" @onclick="() => OpenKegForm()">
     <i class="bi bi-plus-circle me-2"></i> Add Keg
 </button>
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger mt-3">@errorMessage</div>
+}
 
 @if (isKegFormOpen)
 {
@@ -95,6 +99,8 @@ else
     private Keg newKeg = new();
     private bool isKegFormOpen = false;
     private string searchKegTerm = string.Empty;
+    private string errorMessage = string.Empty;
+
 
     protected override void OnInitialized()
     {
@@ -121,11 +127,11 @@ else
     {
         if (newKeg.BatchId == 0)
         {
-            // Handle case when BatchId is not selected or is invalid
             newKeg.BatchId = batches.FirstOrDefault()?.Id ?? 0;
         }
 
-        newKeg.Batch = batches.Find(batch => batch.Id == newKeg.BatchId);
+        newKeg.Batch = null;
+
         if (newKeg.Id == 0)
         {
             KegService.AddKeg(newKeg);
@@ -161,8 +167,16 @@ else
 
     private void DeleteKeg(Keg keg)
     {
-        KegService.DeleteKeg(keg.Id);
-        kegs = KegService.GetAllKegs().ToList(); 
+        try
+        {
+            KegService.DeleteKeg(keg.Id);
+            kegs = KegService.GetAllKegs().ToList();
+            errorMessage = null;
+        }
+        catch (InvalidOperationException ex)
+        {
+            errorMessage = ex.Message;
+        }
     }
 
     private IEnumerable<Keg> filteredKegs =>

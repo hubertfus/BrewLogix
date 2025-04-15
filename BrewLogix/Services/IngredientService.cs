@@ -35,7 +35,17 @@ public class IngredientService
     public void DeleteIngredient(Ingredient ingredient)
     {
         using var _context = _dbContextProvider.GetDbContext();
+
+        bool isUsedInStockEntries = _context.StockEntries.Any(se => se.IngredientId == ingredient.Id);
+
+        if (isUsedInStockEntries)
+        {
+            throw new InvalidOperationException("Cannot delete ingredient. It is used in one or more stock entries.");
+        }
+
         _context.Ingredients.Remove(ingredient);
         _context.SaveChanges();
     }
+
+
 }

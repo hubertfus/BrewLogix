@@ -11,11 +11,19 @@
     <i class="bi bi-plus-circle me-2"></i> Add Client
 </button>
 
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">
+        @errorMessage
+    </div>
+}
+
 @if (isFormOpen)
 {
     <div class="card mb-4">
         <div class="card-body">
             <h5 class="card-title mb-3">@((newClient.Id == 0) ? "Add Client" : "Edit Client")</h5>
+
             <EditForm Model="@newClient" OnValidSubmit="HandleAddClient">
                 <DataAnnotationsValidator />
                 <ValidationSummary />
@@ -81,6 +89,7 @@ else
     private Client newClient = new();
     private bool isFormOpen = false;
     private string searchTerm = string.Empty;
+    private string errorMessage;
 
     protected override void OnInitialized()
     {
@@ -97,46 +106,71 @@ else
     {
         isFormOpen = false;
         newClient = new Client();
+        errorMessage = string.Empty;
     }
 
     private void HandleAddClient()
     {
-        if (newClient.Id == 0) 
+        try
         {
-            ClientService.AddClient(newClient);
-        }
-        else 
-        {
-            ClientService.UpdateClient(newClient);
-        }
+            if (newClient.Id == 0) 
+            {
+                ClientService.AddClient(newClient);
+            }
+            else 
+            {
+                ClientService.UpdateClient(newClient);
+            }
 
-        newClient = new Client();
-        isFormOpen = false;
-        clients = ClientService.GetAllClients().ToList(); 
+            newClient = new Client();
+            isFormOpen = false;
+            clients = ClientService.GetAllClients().ToList();
+            errorMessage = string.Empty;
+        }
+        catch (InvalidOperationException ex)
+        {
+             errorMessage = ex.Message;
+        }
     }
 
     private void EditClient(Client client)
     {
-        newClient = new Client
+        try
         {
+            newClient = new Client
+            {
                 Id = client.Id,
                 Name = client.Name,
                 ContactEmail = client.ContactEmail,
                 Address = client.Address
-        };
+            };
 
-        isFormOpen = true; 
+            isFormOpen = true;
+            errorMessage = string.Empty;
+        }
+        catch (InvalidOperationException ex)
+        {
+            errorMessage = ex.Message;
+        }
     }
 
     private void DeleteClient(Client client)
     {
-        ClientService.DeleteClient(client);
-        clients = ClientService.GetAllClients().ToList(); 
+        try
+        {
+            ClientService.DeleteClient(client);
+            clients = ClientService.GetAllClients().ToList();
+            errorMessage = string.Empty;
+        }
+        catch (InvalidOperationException ex)
+        {
+            errorMessage = ex.Message;
+        }
     }
 
     private IEnumerable<Client> filteredClients =>
-            clients.Where(client => string.IsNullOrWhiteSpace(searchTerm) ||
-                                    client.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                                    client.ContactEmail.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                                    client.Address.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+        clients.Where(client => string.IsNullOrWhiteSpace(searchTerm) ||
+                                client.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                                client.ContactEmail.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                                client.Address.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
 }

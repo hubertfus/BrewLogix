@@ -1,7 +1,51 @@
 ﻿@page "/"
+@rendermode InteractiveServer
 
-<PageTitle>Dashboard</PageTitle>
+<PageTitle>Home - Brewery ERP</PageTitle>
 
-<h1>Dashboard</h1>
+<div class="container py-5">
+    <h1 class="mb-4">🍺 Brewery ERP</h1>
+    <p class="lead">Welcome to the Brewery Management System. Choose the module you want to manage:</p>
 
+    <div class="row row-cols-1 row-cols-md-2 g-4 mt-4">
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">📦 Orders</h5>
+                    <p class="card-text">Manage customer orders, delivery statuses, and invoices.</p>
+                    <a href="/orders" class="btn btn-primary">Go</a>
+                </div>
+            </div>
+        </div>
 
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">🍻 Kegs</h5>
+                    <p class="card-text">Register new kegs, view their status, and track their distribution history.</p>
+                    <a href="/kegs" class="btn btn-primary">Go</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">📋 Recipes</h5>
+                    <p class="card-text">Create and edit recipes used in beer production.</p>
+                    <a href="/recipes" class="btn btn-primary">Go</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">🧪 Batches</h5>
+                    <p class="card-text">Monitor and control production batches, including fill dates.</p>
+                    <a href="/batches" class="btn btn-primary">Go</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -36,6 +36,12 @@ namespace BrewLogix.Services
         public void AddRecipe(Recipe recipe)
         {
             using var _context = _dbContextProvider.GetDbContext();
+
+            foreach (var ri in recipe.Ingredients)
+            {
+                _context.Attach(ri.Ingredient);
+            }
+
             _context.Recipes.Add(recipe);
             _context.SaveChanges();
         }
@@ -55,6 +61,14 @@ namespace BrewLogix.Services
         public void DeleteRecipe(Recipe recipe)
         {
             using var _context = _dbContextProvider.GetDbContext();
+
+            bool isUsedSomewhere = _context.Batches.Any(b => b.RecipeId == recipe.Id);
+
+            if (isUsedSomewhere)
+            {
+                throw new InvalidOperationException("Cannot delete recipe. It is currently in use by a batch.");
+            }
+
             _context.Recipes.Remove(recipe);
             _context.SaveChanges();
         }

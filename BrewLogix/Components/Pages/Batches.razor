@@ -14,14 +14,15 @@
     <i class="bi bi-plus-circle me-2"></i> Add Batch
 </button>
 
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger" role="alert">
+        @errorMessage
+    </div>
+}
+
 @if (isBatchFormOpen)
 {
-    @if (!string.IsNullOrWhiteSpace(errorMessage))
-    {
-        <div class="alert alert-danger" role="alert">
-            @errorMessage
-        </div>
-    }
     <div class="card mb-4">
         <div class="card-body">
             <h5 class="card-title mb-3">@((newBatch.Id == 0) ? "Add Batch" : "Edit Batch")</h5>
@@ -66,7 +67,7 @@
                                                              @bind-Value="ingredient.SelectedStockEntryId">
                                                     @foreach (var entry in stock)
                                                     {
-                                                        <option value="@entry.Id">@entry.Ingredient.Name  @entry.Quantity</option>
+                                                        <option value="@entry.Id">@entry.Ingredient.Name  @entry.Quantity @DateTime.SpecifyKind(entry.ExpiryDate, DateTimeKind.Utc)</option>
                                                     }
                                                 </InputSelect>
     
@@ -259,9 +260,16 @@ else
 
     private void DeleteBatch(Batch batch)
     {
+        if (KegService.IsBatchAssignedToAnyKeg(batch.Id))
+        {
+            errorMessage = $"Cannot delete batch {batch.Code} because it is assigned to one or more kegs.";
+            return;
+        }
+
         BatchService.DeleteBatch(batch);
         batches = BatchService.GetAllBatches().ToList();
     }
+
 
     private IEnumerable<Batch> filteredBatches =>
         batches.Where(batch => string.IsNullOrWhiteSpace(searchBatchTerm) ||

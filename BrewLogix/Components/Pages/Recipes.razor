@@ -26,6 +26,13 @@
                 </div>
             </div>
 
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger">
+                    @errorMessage
+                </div>
+            }
+
             @if (isRecipeFormOpen)
             {
                 <div class="card mb-4">
@@ -160,6 +167,8 @@
     private RecipeIngredient newRecipeIngredient = new RecipeIngredient();
     private List<Recipe> recipes = new List<Recipe>();
     private List<Ingredient> ingredients;
+    private string errorMessage;
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -255,7 +264,15 @@
 
     private void DeleteRecipe(Recipe recipe)
     {
-        RecipeService.DeleteRecipe(recipe);
-        recipes = RecipeService.GetAllRecipes().ToList();
+        try
+        {
+            RecipeService.DeleteRecipe(recipe);
+            recipes = RecipeService.GetAllRecipes().ToList();
+            errorMessage = string.Empty;
+        }
+        catch (InvalidOperationException ex)
+        {
+            errorMessage = ex.Message;
+        }
     }
 }

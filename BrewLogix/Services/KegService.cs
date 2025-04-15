@@ -22,6 +22,12 @@ namespace BrewLogix.Services
                 .Include(k => k.Batch)
                 .ToList();
         }
+        
+        public bool IsBatchAssignedToAnyKeg(int batchId)
+        {
+            using var _context = _dbContextProvider.GetDbContext();
+            return _context.Kegs.Any(k => k.BatchId == batchId);
+        }
 
         public Keg? GetKegById(int id)
         {
@@ -58,9 +64,17 @@ namespace BrewLogix.Services
         public void DeleteKeg(int id)
         {
             using var _context = _dbContextProvider.GetDbContext();
-            var keg = _context.Kegs.Find(id);
+            var keg = _context.Kegs
+                .Include(k => k.Order)
+                .FirstOrDefault(k => k.Id == id);
+
             if (keg != null)
             {
+                if (keg.Order != null)
+                {
+                    throw new InvalidOperationException("Cannot delete keg assigned to an order.");
+                }
+
                 _context.Kegs.Remove(keg);
                 _context.SaveChanges();
             }

@@ -226,21 +226,36 @@
     {
         if (selectedRecipe != null)
         {
-            selectedRecipe.Name = newRecipe.Name;
-            selectedRecipe.Style = newRecipe.Style;
-            selectedRecipe.Description = newRecipe.Description;
-            selectedRecipe.Ingredients = newRecipe.Ingredients;
+            var recipeToUpdate = new Recipe
+            {
+                Id = selectedRecipe.Id,
+                Name = newRecipe.Name,
+                Style = newRecipe.Style,
+                Description = newRecipe.Description,
+                Ingredients = newRecipe.Ingredients.Select(i => new RecipeIngredient
+                {
+                    Id = i.Id,
+                    IngredientId = i.IngredientId,
+                    Quantity = i.Quantity
+                }).ToList()
+            };
 
-            RecipeService.UpdateRecipe(selectedRecipe);
+            RecipeService.UpdateRecipe(recipeToUpdate);
         }
         else
         {
+            foreach (var ingredient in newRecipe.Ingredients)
+            {
+                ingredient.Ingredient = null; // prevent navigation conflict
+            }
+
             RecipeService.AddRecipe(newRecipe);
         }
 
         recipes = RecipeService.GetAllRecipes().ToList();
         CancelRecipe();
     }
+
 
     private void EditRecipe(Recipe recipe)
     {

@@ -4,7 +4,7 @@ namespace BrewLogix.Models;
 
 public class StockEntry : BaseEntity
 {      
-    [Required(ErrorMessage = "Ingredient is required")]
+    [Range(1, int.MaxValue, ErrorMessage = "Ingredient is required")]
     public int IngredientId { get; set; }
     public Ingredient Ingredient { get; set; }
     

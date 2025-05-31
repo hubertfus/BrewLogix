@@ -17,7 +17,7 @@ namespace BrewLogix.Seeders
                 {
                     Code = "KEG001",
                     BatchId = 1,
-                    Size = "50L",
+                    Size = "50",
                     IsDistributed = false,
                     FilledAt = DateTime.UtcNow.AddDays(-2)
                 },
@@ -25,7 +25,7 @@ namespace BrewLogix.Seeders
                 {
                     Code = "KEG002",
                     BatchId = 2,
-                    Size = "30L",
+                    Size = "30",
                     IsDistributed = false,
                     FilledAt = DateTime.UtcNow.AddDays(-1)
                 },
@@ -33,7 +33,7 @@ namespace BrewLogix.Seeders
                 {
                     Code = "KEG003",
                     BatchId = 3,
-                    Size = "20L",
+                    Size = "20",
                     IsDistributed = false,
                     FilledAt = DateTime.UtcNow.AddDays(-3)
                 }

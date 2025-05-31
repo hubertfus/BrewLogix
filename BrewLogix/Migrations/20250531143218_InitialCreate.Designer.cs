@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BrewLogix.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250415150502_InitialCreate")]
+    [Migration("20250531143218_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

@@ -35,9 +35,22 @@ namespace BrewLogix.Services
         {
             using var _context = _dbContextProvider.GetDbContext();
             order.OrderedAt = order.OrderedAt.ToUniversalTime();
+
+            var kegStubs = order.Kegs
+                .Select(k => new Keg { Id = k.Id })
+                .ToList();
+
+            foreach (var keg in kegStubs)
+            {
+                _context.Attach(keg);
+            }
+
+            order.Kegs = kegStubs;
+
             _context.Orders.Add(order);
             _context.SaveChanges();
         }
+
 
         public void UpdateOrder(Order order)
         {

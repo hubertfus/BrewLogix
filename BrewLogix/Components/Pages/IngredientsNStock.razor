@@ -63,7 +63,7 @@
                 <div class="mb-3">
                     <label class="form-label">Ingredient</label>
                     <InputSelect class="form-select" @bind-Value="newStockEntry.IngredientId">
-                        <option value="">-- Select Ingredient --</option>
+                        <option value="0">-- Select Ingredient --</option>
                         @foreach (var ingredient in ingredients)
                         {
                             <option value="@ingredient.Id">@ingredient.Name</option>
@@ -226,9 +226,12 @@
 
     private void HandleAddOrUpdateStockEntry()
     {
-        newStockEntry.Ingredient = ingredients.Find(ingredient => ingredient.Id == newStockEntry.IngredientId);
         newStockEntry.DeliveryDate = DateTime.SpecifyKind(newStockEntry.DeliveryDate, DateTimeKind.Utc);
-
+        if (newStockEntry.IngredientId == 0)
+        {
+            errorMessage = "Please select a valid ingredient.";
+            return;
+        }
         if (newStockEntry.Id == 0)
         {
             StockEntriesService.AddStockEntry(newStockEntry);
@@ -245,6 +248,7 @@
         };
         isStockEntryFormOpen = false;
     }
+
 
     private void EditStockEntry(StockEntry entry)
     {
